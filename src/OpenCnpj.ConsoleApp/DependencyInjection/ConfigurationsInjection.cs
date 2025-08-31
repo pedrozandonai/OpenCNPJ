@@ -1,0 +1,34 @@
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenCnpj.ConsoleApp.Configurations;
+
+namespace OpenCnpj.ConsoleApp.DependencyInjection;
+public static class ConfigurationsInjection
+{
+    public static IServiceCollection AddConfigurations(this IServiceCollection services, IConfiguration configuration)
+    {
+        GovSetttings govSetttings = new();
+
+        configuration.GetRequiredSection(nameof(GovSetttings)).Bind(govSetttings);
+
+        var govSettingsBuildReusult = govSetttings.Verify();
+        if (govSettingsBuildReusult.IsFailure)
+            throw new Exception(govSettingsBuildReusult.Error);
+
+        services.AddSingleton(govSetttings);
+
+        BatchSettings batchSettings = new();
+
+        configuration.GetRequiredSection(nameof(BatchSettings)).Bind(batchSettings);
+
+        services.AddSingleton(batchSettings);
+
+        DatabaseSettings databaseSettings = new();
+
+        configuration.GetRequiredSection(nameof(DatabaseSettings)).Bind(databaseSettings);
+
+        services.AddSingleton(databaseSettings);
+
+        return services;
+    }
+}

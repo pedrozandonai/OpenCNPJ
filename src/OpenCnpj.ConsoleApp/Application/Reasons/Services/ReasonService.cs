@@ -1,0 +1,46 @@
+﻿using CSharpFunctionalExtensions;
+using MongoDB.Driver;
+using OpenCnpj.ConsoleApp.Application.RawRecords;
+using OpenCnpj.ConsoleApp.Application.Reasons.Domain;
+using OpenCnpj.ConsoleApp.Application.Reasons.Repositories;
+using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
+using Serilog;
+using System.Runtime.CompilerServices;
+
+namespace OpenCnpj.ConsoleApp.Application.Reasons.Services;
+public class ReasonService(IMongoDatabaseFactory mongoDatabaseFactory, IReasonRepository reasonRepository, ILogger logger) : IReasonService
+{
+    private readonly ILogger _logger = logger.ForContext<ReasonService>();
+    public async Task<Result> CreateReasons(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await reasonRepository.DatabaseFactory.BeginAsync();
+
+            await foreach (var reasonRawRecordRecord in GetAllPartnerQualificationRawRecords(cancellationToken))
+                await reasonRepository.Insert(Reason.Create(reasonRawRecordRecord.Description), cancellationToken);
+
+            await reasonRepository.DatabaseFactory.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "An exception occured while trying to create 'Reason' domain.");
+
+            return Result.Failure("An error occured while trying to create 'Reason' domain.");
+        }
+
+        return Result.Success();
+    }
+
+    private async IAsyncEnumerable<ReasonRawRecord> GetAllPartnerQualificationRawRecords([EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var citiesRawRecords = mongoDatabaseFactory.Database.GetCollection<ReasonRawRecord>("ReasonRawRecord");
+
+        using var cursor = await citiesRawRecords.FindAsync(FilterDefinition<ReasonRawRecord>.Empty, cancellationToken: cancellationToken);
+        while (await cursor.MoveNextAsync(cancellationToken))
+        {
+            foreach (var record in cursor.Current)
+                yield return record;
+        }
+    }
+}

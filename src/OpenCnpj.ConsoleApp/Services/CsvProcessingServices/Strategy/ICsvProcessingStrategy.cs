@@ -1,0 +1,10 @@
+﻿using CSharpFunctionalExtensions;
+using CsvHelper;
+using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
+
+namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy;
+public interface ICsvProcessingStrategy
+{
+    string FilePattern { get; }
+    Task<Result> ProcessAsync(Batch batch, CsvReader csvReader, string fileName, CancellationToken cancellationToken);
+}
