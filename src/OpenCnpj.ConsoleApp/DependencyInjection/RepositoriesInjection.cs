@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Repositories;
 using OpenCnpj.ConsoleApp.Application.Cities.Repositories;
+using OpenCnpj.ConsoleApp.Application.Companies.Repositories;
 using OpenCnpj.ConsoleApp.Application.Countries.Repositories;
 using OpenCnpj.ConsoleApp.Application.EconomicActivities.Repositories;
 using OpenCnpj.ConsoleApp.Application.LegalNatures.Repositories;
@@ -19,6 +20,7 @@ public static class RepositoriesInjection
         services.AddTransient<ILegalNatureRepository, LegalNatureRepository>();
         services.AddTransient<IPartnerQualificationRepository, PartnerQualificationRepository>();
         services.AddTransient<IReasonRepository, ReasonRepository>();
+        services.AddTransient<ICompanyRepository, CompanyRepository>();
 
         return services;
     }

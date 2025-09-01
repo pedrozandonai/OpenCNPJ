@@ -1,6 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
-using OpenCnpj.ConsoleApp.Application.Cities.Domain;
 using OpenCnpj.ConsoleApp.Application.Countries.Domain;
 using OpenCnpj.ConsoleApp.Application.Countries.Repositories;
 using OpenCnpj.ConsoleApp.Application.RawRecords;

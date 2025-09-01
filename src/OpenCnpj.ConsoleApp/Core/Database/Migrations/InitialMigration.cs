@@ -95,7 +95,7 @@ public class InitialMigration : Migration
             
         Create.Table("addresses")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("address_type_id").AsString().NotNullable()
+            .WithColumn("address_type_id").AsInt64().NotNullable()
             .WithColumn("city_id").AsInt64().NotNullable()
             .WithColumn("description").AsString().NotNullable()
             .WithColumn("number").AsInt32().NotNullable()
@@ -117,6 +117,7 @@ public class InitialMigration : Migration
             .WithColumn("special_situation_id").AsInt64().NotNullable()
             .WithColumn("identifier").AsString().NotNullable()
             .WithColumn("name").AsString().NotNullable()
+            .WithColumn("fantasy_name").AsString().NotNullable()
             .WithColumn("share_capital").AsDecimal().Nullable()
             .WithColumn("responsabile_federative_entity").AsString().Nullable()
             .WithColumn("register_date").AsDate().NotNullable()

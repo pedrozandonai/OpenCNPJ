@@ -19,4 +19,29 @@ public class Company
     public DateOnly? RegisterDate { get; private set; }
     public string? ForeingCityName { get; private set; }
     public DateOnly StartDate { get; private set; }
+
+    private Company(long iD, int legalNatureID, int mainPartnerQualificationID, int companySizeID, int companyTypeID, int reasonID, int countryID, long addressID, long? specialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateOnly? registerDate, string? foreingCityName, DateOnly startDate)
+    {
+        ID=iD;
+        LegalNatureID=legalNatureID;
+        MainPartnerQualificationID=mainPartnerQualificationID;
+        CompanySizeID=companySizeID;
+        CompanyTypeID=companyTypeID;
+        ReasonID=reasonID;
+        CountryID=countryID;
+        AddressID=addressID;
+        SpecialSituationID=specialSituationID;
+        MainEconomicActivityID=mainEconomicActivityID;
+        Identifier=identifier;
+        Name=name;
+        ShareCapital=shareCapital;
+        ResponsableFederativeEntity=responsableFederativeEntity;
+        FantasyName=fantasyName;
+        RegisterDate=registerDate;
+        ForeingCityName=foreingCityName;
+        StartDate=startDate;
+    }
+
+    public static Company Create(int legalNatureID, int mainPartnerQualificationID, int companySizeID, int companyTypeID, int reasonID, int countryID, long addressID, long? specialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateOnly? registerDate, string? foreingCityName, DateOnly startDate)
+        => new(0, legalNatureID, mainPartnerQualificationID, companySizeID, companyTypeID, reasonID, countryID, addressID, specialSituationID, mainEconomicActivityID, identifier, name, shareCapital, responsableFederativeEntity, fantasyName, registerDate, foreingCityName, startDate);
 }
