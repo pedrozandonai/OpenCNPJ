@@ -9,15 +9,17 @@ public class Batch
     public string Status { get; private set; }
     public string? Directory { get; private set; }
 
-    private Batch(int id, string identifier)
+    private Batch(string identifier)
     {
-        ID = id;
         Identifier = identifier;
         Status = "Created";
     }
 
-    public static Batch Create(int id)
-        => new(id, DateTime.Now.ToString("yyyy-MM"));
+    public void SetID(int id)
+        => ID = id; 
+
+    public static Batch Create()
+        => new(DateTime.Now.ToString("yyyy-MM"));
 
     public void Update(string newStatus)
     {

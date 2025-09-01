@@ -7,18 +7,17 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
 {
     public IDatabaseFactory DatabaseFactory => databaseFactory;
 
-    public async Task Insert(Batch batch, CancellationToken cancellationToken)
+    public async Task<int> Insert(Batch batch, CancellationToken cancellationToken)
     {
-        const string sql = @"INSERT INTO batches (id,
-                                                  identifier,
+        const string sql = @"INSERT INTO batches (identifier,
                                                   status)
-                                          VALUES (@ID,
-                                                  @Identifier,
-                                                  @Status)";
+                                          VALUES (@Identifier,
+                                                  @Status)
+                                       RETURNING id";
 
         var command = new CommandDefinition(sql, batch, transaction:DatabaseFactory.Transaction, cancellationToken:cancellationToken);
 
-        await DatabaseFactory.Connection.ExecuteAsync(command);
+        return await DatabaseFactory.Connection.ExecuteScalarAsync<int>(command);
     }
 
     public async Task Update(Batch batch, CancellationToken cancellationToken)
@@ -30,14 +29,5 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
         var command = new CommandDefinition(sql, batch, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 
         await DatabaseFactory.Connection.ExecuteAsync(command);
-    }
-
-    public async Task<int> GetSequence(CancellationToken cancellationToken)
-    {
-        const string sql = "SELECT nextval('seq_batches')";
-
-        var command = new CommandDefinition(sql, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
-
-        return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<int>(command);
     }
 }

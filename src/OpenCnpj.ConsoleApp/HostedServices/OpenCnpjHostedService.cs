@@ -1,14 +1,16 @@
 ﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
+using OpenCnpj.ConsoleApp.Helpers;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices;
 using OpenCnpj.ConsoleApp.Services.Interfaces;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp.HostedServices;
 
-public class OpenCnpjHostedService(IBatchService batchService, IGovernmentHttpClient governmentHttpClient, IFileExtractionService fileExtractionService, ICsvProcessingService csvProcessingService, IFormatDataService formatDataService, ILogger logger, IHostApplicationLifetime lifetime) : BackgroundService
+public class OpenCnpjHostedService(IBatchService batchService, IGovernmentHttpClient governmentHttpClient, IFileExtractionService fileExtractionService, ICsvProcessingService csvProcessingService, IFormatDataService formatDataService, ILogger logger, IHostApplicationLifetime lifetime, IServiceProvider serviceProvider) : BackgroundService
 {
     private readonly ILogger _logger = logger.ForContext<OpenCnpjHostedService>();
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

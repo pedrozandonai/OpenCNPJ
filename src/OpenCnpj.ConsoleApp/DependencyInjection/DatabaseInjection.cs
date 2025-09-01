@@ -1,10 +1,12 @@
 ﻿using FluentMigrator.Runner;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenCnpj.ConsoleApp.Configurations;
 using OpenCnpj.ConsoleApp.Core.Database.Factory;
 using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
 using OpenCnpj.ConsoleApp.Core.Database.Migrations;
+using OpenCnpj.ConsoleApp.Helpers;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 
@@ -21,7 +23,18 @@ public static class DatabaseInjection
             throw new Exception("The 'MongoDB' connection string can not be null or empty.");
 
         services.AddScoped<IDatabaseFactory>(_ => new DatabaseFactory(postgresConnectionString));
-        services.AddSingleton<IMongoDatabaseFactory>(_ => new MongoDatabaseFactory(mongoConnectionString, "OpenCnpj"));
+
+        services.AddHealthChecks()
+            .AddNpgSql(configuration.GetConnectionString("Postgresql")!,
+               name: "PostgreSQL Health Check",
+               failureStatus: HealthStatus.Unhealthy);
+
+        var mongoDatabaseFactory = new MongoDatabaseFactory(mongoConnectionString, "OpenCnpj");
+        services.AddSingleton<IMongoDatabaseFactory>(_ => mongoDatabaseFactory);
+
+        services.AddHealthChecks()
+        .AddMongoDb(sr => mongoDatabaseFactory.Client,
+            failureStatus: HealthStatus.Unhealthy);
 
         services.AddFluentMigratorCore()
             .ConfigureRunner(rb => rb
@@ -53,8 +66,9 @@ public static class DatabaseInjection
 
         if (databaseSettings.FormatPostgres!.Value)
         {
-            runner.Down(initialMigration);
-            runner.Up(initialMigration);
+            //runner.Down(initialMigration);
+            //runner.Up(initialMigration);
+            runner.MigrateUp();
         }
     }
 }

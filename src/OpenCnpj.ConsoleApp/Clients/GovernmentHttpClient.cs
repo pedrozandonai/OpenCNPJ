@@ -4,7 +4,9 @@ using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
 using OpenCnpj.ConsoleApp.Configurations;
 using OpenCnpj.ConsoleApp.Constants;
+using Polly;
 using Serilog;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace OpenCnpj.ConsoleApp.Clients;
@@ -19,11 +21,22 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
             if (updateBatchResult.IsFailure)
                 return Result.Failure(updateBatchResult.Error);
 
-            string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Identifier);
+            //TODO: Descomentar dps de testar
+            //string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Identifier);
+            string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, "2025-08");
 
             logger.Information("Fetching download URLs from: {0}", currentGovDataUrl);
 
             var response = await httpClient.GetAsync(currentGovDataUrl, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                string errorMessage = string.Format("The data from the government could not be found on this batch date: {0}", batch.Identifier);
+
+                logger.Warning(errorMessage);
+
+                return Result.Failure(errorMessage);
+            }
+
             var htmlContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             var currentCsvUrlsGovData = ExtractDownloadUrls(htmlContent, currentGovDataUrl);
@@ -72,54 +85,69 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
         if (threadAmount > urls.Count)
             threadAmount = urls.Count;
 
-        var semaphore = new SemaphoreSlim(threadAmount);
+        var retryPolicy = Policy
+            .Handle<Exception>()
+            .Or<HttpRequestException>()
+            .WaitAndRetryAsync(
+                retryCount: 5,
+                sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                onRetry: (ex, ts) =>
+                {
+                    Console.WriteLine($"Retry after {ts.TotalSeconds}s due to {ex.Message}");
+                }
+            );
+
+        var semaphore = new SemaphoreSlim(10);
 
         var tasks = urls.Select(async url =>
         {
             await semaphore.WaitAsync();
             try
             {
-                var rawDirectory = Paths.GetRawDirectoryByBatch(batch);
-                if (!Directory.Exists(rawDirectory))
-                    Directory.CreateDirectory(rawDirectory);
-
-                var fileName = Path.GetFileName(url);
-                var filePath = Path.Combine(rawDirectory, fileName);
-
-                logger.Information("Downloading: {0}", fileName);
-
-                using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                response.EnsureSuccessStatusCode();
-
-                var totalBytes = response.Content.Headers.ContentLength;
-                var buffer = new byte[81920]; // 80KB (bom tamanho para streaming)
-                long totalRead = 0;
-                int read;
-
-                await using var stream = await response.Content.ReadAsStreamAsync();
-                await using var fileStream = File.Create(filePath);
-
-                var lastLoggedMb = 0;
-
-                while ((read = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                await retryPolicy.ExecuteAsync(async () =>
                 {
-                    await fileStream.WriteAsync(buffer, 0, read);
-                    totalRead += read;
+                    var rawDirectory = Paths.GetRawDirectoryByBatch(batch);
+                    if (!Directory.Exists(rawDirectory))
+                        Directory.CreateDirectory(rawDirectory);
 
-                    var downloadedMb = (int)(totalRead / 1024 / 1024);
-                    if (downloadedMb >= lastLoggedMb + 10) // log a cada 10MB
+                    var fileName = Path.GetFileName(url);
+                    var filePath = Path.Combine(rawDirectory, fileName);
+
+                    logger.Information("Downloading: {0}", fileName);
+
+                    using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                    response.EnsureSuccessStatusCode();
+
+                    var totalBytes = response.Content.Headers.ContentLength;
+                    var buffer = new byte[81920]; // 80KB (bom tamanho para streaming)
+                    long totalRead = 0;
+                    int read;
+
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    await using var fileStream = File.Create(filePath);
+
+                    var lastLoggedMb = 0;
+
+                    while ((read = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        logger.Information("Downloading {0}: {1:N0} MB of {2:N0} MB",
-                            fileName,
-                            downloadedMb,
-                            totalBytes.HasValue ? totalBytes.Value / 1024 / 1024 : -1);
-                        lastLoggedMb = downloadedMb;
-                    }
-                }
+                        await fileStream.WriteAsync(buffer, 0, read);
+                        totalRead += read;
 
-                logger.Information("Download concluded: {0} ({1:N0} MB)",
-                    fileName,
-                    totalRead / 1024 / 1024);
+                        var downloadedMb = (int)(totalRead / 1024 / 1024);
+                        if (downloadedMb >= lastLoggedMb + 10) // log a cada 10MB
+                        {
+                            logger.Information("Downloading {0}: {1:N0} MB of {2:N0} MB",
+                                fileName,
+                                downloadedMb,
+                                totalBytes.HasValue ? totalBytes.Value / 1024 / 1024 : -1);
+                            lastLoggedMb = downloadedMb;
+                        }
+                    }
+
+                    logger.Information("Download concluded: {0} ({1:N0} MB)",
+                        fileName,
+                        totalRead / 1024 / 1024);
+                });
             }
             catch (Exception ex)
             {

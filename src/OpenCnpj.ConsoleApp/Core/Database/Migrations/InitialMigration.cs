@@ -7,10 +7,8 @@ public class InitialMigration : Migration
 {
     public override void Up()
     {
-        Create.Sequence("seq_batches").MinValue(1).Cache(10).IncrementBy(1);
-
         Create.Table("batches")
-            .WithColumn("id").AsInt32().PrimaryKey()
+            .WithColumn("id").AsInt32().PrimaryKey().Identity()
             .WithColumn("identifier").AsString(50).NotNullable().Unique()
             .WithColumn("status").AsString(30).NotNullable();
 
@@ -302,8 +300,6 @@ public class InitialMigration : Migration
         Delete.Table("company_sizes").IfExists();
         Delete.Table("age_ranges").IfExists();
         Delete.Table("batches").IfExists();
-
-        Delete.Sequence("seq_batches");
     }
 
     private void InsertAgeRanges()

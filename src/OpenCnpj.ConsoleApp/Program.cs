@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using OpenCnpj.ConsoleApp.DependencyInjection;
+using OpenCnpj.ConsoleApp.Helpers;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp;
@@ -23,6 +24,8 @@ internal static class Program
             Log.Information("Application Started!");
 
             var host = CreateHost(configuration);
+
+            await HealthCheckWaiter.WaitForDatabasesAsync(host.Services);
 
             RunMigrations(host.Services);
 

@@ -15,15 +15,15 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
         {
             await batchRepository.DatabaseFactory.BeginAsync();
 
-            var batchID = await batchRepository.GetSequence(cancellationToken);
-
-            var batch = Batch.Create(batchID);
+            var batch = Batch.Create();
 
             var batchDirectoryCreationResult = batch.CreateBatchDirectory();
             if (batchDirectoryCreationResult.IsFailure)
                 return Result.Failure<Batch>(batchDirectoryCreationResult.Error);
 
-            await batchRepository.Insert(batch, cancellationToken);
+            var batchID = await batchRepository.Insert(batch, cancellationToken);
+
+            batch.SetID(batchID);
 
             await batchRepository.DatabaseFactory.CommitAsync();
 
