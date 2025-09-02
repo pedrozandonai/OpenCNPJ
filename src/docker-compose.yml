@@ -1,5 +1,5 @@
 services:
-  app:
+  opencnpj:
     build: .
     container_name: OpenCNPJ
     ports:

@@ -22,6 +22,7 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
                 return Result.Failure(updateBatchResult.Error);
 
             //TODO: Descomentar dps de testar
+            //TODO: Quando o mês atual não possui dados disponíveis, criar o batch com status de aguardando e deixar a aplicação rodando, disparando requests pro governo através de um cron de 1 dia talvez, até que haja dados disponíveis para serem baixados naquele batch.
             //string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Identifier);
             string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, "2025-08");
 

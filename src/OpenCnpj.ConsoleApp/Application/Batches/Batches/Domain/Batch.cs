@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using OpenCnpj.ConsoleApp.Application.ApplicationSteps.Models.Enums;
 using OpenCnpj.ConsoleApp.Constants;
 
 namespace OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
@@ -7,19 +8,24 @@ public class Batch
     public int ID { get; private set; }
     public string Identifier { get; private set; }
     public string Status { get; private set; }
+    public EApplicationStep ApplicationLastStepID { get; private set; }
     public string? Directory { get; private set; }
 
     private Batch(string identifier)
     {
         Identifier = identifier;
         Status = "Created";
+        ApplicationLastStepID = EApplicationStep.StartedApplication;
     }
 
     public void SetID(int id)
         => ID = id; 
 
-    public static Batch Create()
-        => new(DateTime.Now.ToString("yyyy-MM"));
+    public void SetLastStep(EApplicationStep applicationLastStepID)
+        => ApplicationLastStepID = applicationLastStepID; 
+
+    public static Batch Create(string identifier)
+        => new(identifier);
 
     public void Update(string newStatus)
     {

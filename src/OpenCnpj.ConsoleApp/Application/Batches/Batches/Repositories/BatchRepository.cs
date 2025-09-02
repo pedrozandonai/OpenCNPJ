@@ -10,9 +10,11 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
     public async Task<int> Insert(Batch batch, CancellationToken cancellationToken)
     {
         const string sql = @"INSERT INTO batches (identifier,
-                                                  status)
+                                                  status,
+                                                  application_last_step_id)
                                           VALUES (@Identifier,
-                                                  @Status)
+                                                  @Status,
+                                                  @ApplicationLastStepID)
                                        RETURNING id";
 
         var command = new CommandDefinition(sql, batch, transaction:DatabaseFactory.Transaction, cancellationToken:cancellationToken);
@@ -29,5 +31,19 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
         var command = new CommandDefinition(sql, batch, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 
         await DatabaseFactory.Connection.ExecuteAsync(command);
+    }
+
+    public async Task<Batch?> GetBatchByIdentifier(string identifier, CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    identifier AS Identifier,
+                                    status AS Status,
+                                    application_last_step_id AS ApplicationLastStepId
+                               FROM batches
+                              WHERE identifier = @Identifier";
+
+        var command = new CommandDefinition(sql, new { identifier }, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
+
+        return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<Batch>(command);
     }
 }

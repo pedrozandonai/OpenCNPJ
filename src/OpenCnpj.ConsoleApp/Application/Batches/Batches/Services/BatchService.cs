@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using OpenCnpj.ConsoleApp.Application.ApplicationSteps.Models.Enums;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Repositories;
 using Serilog;
@@ -9,13 +10,13 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
 {
     private readonly ILogger _logger = logger.ForContext<BatchService>();
 
-    public async Task<Result<Batch>> CreateNewBatch(CancellationToken cancellationToken)
+    public async Task<Result<Batch>> CreateNewBatch(string identifier, CancellationToken cancellationToken)
     {
         try
         {
             await batchRepository.DatabaseFactory.BeginAsync();
 
-            var batch = Batch.Create();
+            var batch = Batch.Create(identifier);
 
             var batchDirectoryCreationResult = batch.CreateBatchDirectory();
             if (batchDirectoryCreationResult.IsFailure)
@@ -40,7 +41,7 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
             return Result.Failure<Batch>(errorMessage);
         }
     }
-
+    
     public async Task<Result<Batch>> UpdateBatchStatus(Batch batch, string newStatus, CancellationToken cancellationToken)
     {
         try
@@ -63,5 +64,42 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
 
             return Result.Failure<Batch>(errorMessage);
         }
+    }
+
+    public async Task<Result> SetApplicationLastStep(Batch batch, EApplicationStep lastApplicationStep, CancellationToken cancellationToken)
+    {
+        await batchRepository.DatabaseFactory.BeginAsync();
+
+        bool isLastStepInvalid = false;
+        
+        switch (batch.ApplicationLastStepID)
+        {
+            case EApplicationStep.StartedApplication:
+                if (lastApplicationStep != EApplicationStep.DownloadingFiles)
+                    isLastStepInvalid = true;
+                break;
+            
+            case EApplicationStep.DownloadingFiles:
+                if (lastApplicationStep != EApplicationStep.ExtractingFiles)
+                    isLastStepInvalid = true;
+                break;
+            
+            case EApplicationStep.ExtractingFiles:
+                if (lastApplicationStep != EApplicationStep.FormattingRawData)
+                    isLastStepInvalid = true;
+                break;
+            
+            default:
+                return Result.Failure("Could not recognize the last application step.");
+        }
+        
+        if (isLastStepInvalid)
+            return Result.Failure("The last step is invalid.");
+        
+        batch.SetLastStep(lastApplicationStep);
+        
+        await batchRepository.DatabaseFactory.CommitAsync();
+
+        return Result.Success();
     }
 }

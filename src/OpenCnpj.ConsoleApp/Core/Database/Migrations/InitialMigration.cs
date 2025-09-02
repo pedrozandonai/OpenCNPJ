@@ -7,10 +7,17 @@ public class InitialMigration : Migration
 {
     public override void Up()
     {
+        Create.Table("application_steps")
+            .WithColumn("id").AsInt32().PrimaryKey()
+            .WithColumn("description").AsString().NotNullable();
+
+        CreateApplicationSteps();
+        
         Create.Table("batches")
             .WithColumn("id").AsInt32().PrimaryKey().Identity()
             .WithColumn("identifier").AsString(50).NotNullable().Unique()
-            .WithColumn("status").AsString(30).NotNullable();
+            .WithColumn("status").AsString(30).NotNullable()
+            .WithColumn("application_last_step_id").AsInt32().NotNullable();
 
         Create.Table("age_ranges")
             .WithColumn("id").AsInt32().PrimaryKey()
@@ -148,6 +155,11 @@ public class InitialMigration : Migration
             .WithColumn("partner_type_id").AsInt32().NotNullable();
 
         // FOREIGN KEYS
+        Create.ForeignKey("FK_batch_application_steps")
+            .FromTable("batches").ForeignColumn("application_last_step_id")
+            .ToTable("application_steps").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+        
         Create.ForeignKey("FK_contacts_phones")
             .FromTable("contacts").ForeignColumn("phone_id")
             .ToTable("phones").PrimaryColumn("id")
@@ -300,6 +312,15 @@ public class InitialMigration : Migration
         Delete.Table("company_sizes").IfExists();
         Delete.Table("age_ranges").IfExists();
         Delete.Table("batches").IfExists();
+    }
+
+    private void CreateApplicationSteps()
+    {
+        Insert.IntoTable("application_steps").Row(new { id = 0, description = "APLICAÇÃO INICIALIZADA" });
+        Insert.IntoTable("application_steps").Row(new { id = 1, description = "REALIZANDO DOWNLOAD DOS ARQUIVOS" });
+        Insert.IntoTable("application_steps").Row(new { id = 2, description = "EXTRAINDO ARQUIVOS BRUTOS" });
+        Insert.IntoTable("application_steps").Row(new { id = 3, description = "PROCESSANDO DADOS BRUTOS" });
+        Insert.IntoTable("application_steps").Row(new { id = 4, description = "FORMATANDO DADOS BRUTOS" });
     }
 
     private void InsertAgeRanges()
