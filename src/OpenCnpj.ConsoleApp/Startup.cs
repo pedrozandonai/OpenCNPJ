@@ -13,6 +13,7 @@ public static class Startup
             .AddConfigurations(configuration)
             .AddDatabase(configuration)
             .AddRepositories()
+            .AddQueries()
             .AddClients()
             .AddServices();
 

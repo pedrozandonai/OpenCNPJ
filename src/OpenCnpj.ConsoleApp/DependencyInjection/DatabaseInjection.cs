@@ -5,8 +5,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenCnpj.ConsoleApp.Configurations;
 using OpenCnpj.ConsoleApp.Core.Database.Factory;
 using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
+using OpenCnpj.ConsoleApp.Core.Database.Helpers;
 using OpenCnpj.ConsoleApp.Core.Database.Migrations;
-using OpenCnpj.ConsoleApp.Helpers;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 
@@ -22,15 +22,15 @@ public static class DatabaseInjection
         if (string.IsNullOrEmpty(mongoConnectionString))
             throw new Exception("The 'MongoDB' connection string can not be null or empty.");
 
-        services.AddScoped<IDatabaseFactory>(_ => new DatabaseFactory(postgresConnectionString));
+        services.AddScoped<IDatabaseFactory>(sr => new DatabaseFactory(postgresConnectionString));
+
+        var mongoDatabaseFactory = new MongoDatabaseFactory(mongoConnectionString, "OpenCnpj");
+        services.AddSingleton<IMongoDatabaseFactory>(sr => mongoDatabaseFactory);
 
         services.AddHealthChecks()
             .AddNpgSql(configuration.GetConnectionString("Postgresql")!,
                name: "PostgreSQL Health Check",
                failureStatus: HealthStatus.Unhealthy);
-
-        var mongoDatabaseFactory = new MongoDatabaseFactory(mongoConnectionString, "OpenCnpj");
-        services.AddSingleton<IMongoDatabaseFactory>(_ => mongoDatabaseFactory);
 
         services.AddHealthChecks()
         .AddMongoDb(sr => mongoDatabaseFactory.Client,
@@ -38,7 +38,6 @@ public static class DatabaseInjection
 
         services.AddFluentMigratorCore()
             .ConfigureRunner(rb => rb
-            //.AddDb2() kkkkkk
             .AddPostgres()
             .WithGlobalConnectionString(postgresConnectionString)
             .ScanIn(typeof(InitialMigration).Assembly).For.All())
@@ -47,28 +46,25 @@ public static class DatabaseInjection
         return services;
     }
 
-    public static void UpdateDatabase(IServiceProvider serviceProvider)
+    public static async Task UpdateDatabase(IServiceProvider serviceProvider)
     {
         var databaseSettings = serviceProvider.GetRequiredService<DatabaseSettings>();
         var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
-
-        var initialMigration = new InitialMigration();
+        var mongoFactory = serviceProvider.GetRequiredService<IMongoDatabaseFactory>();
 
         if (databaseSettings.FormatMongoDB!.Value)
         {
-            var mongoFactory = serviceProvider.GetRequiredService<IMongoDatabaseFactory>();
             var client = mongoFactory.Client;
             var databaseName = mongoFactory.Database.DatabaseNamespace.DatabaseName;
 
-            // Remove o database inteiro
-            client.DropDatabase(databaseName);
+            await client.DropDatabaseAsync(databaseName);
         }
 
+        await MongoIndexes.EnsureIndexes(mongoFactory);
+
         if (databaseSettings.FormatPostgres!.Value)
-        {
-            //runner.Down(initialMigration);
-            //runner.Up(initialMigration);
-            runner.MigrateUp();
-        }
+            await SqlDatabaseHelper.DropSchema(serviceProvider);
+
+        runner.MigrateUp();
     }
 }

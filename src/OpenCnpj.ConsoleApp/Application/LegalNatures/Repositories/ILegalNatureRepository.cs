@@ -5,4 +5,5 @@ namespace OpenCnpj.ConsoleApp.Application.LegalNatures.Repositories;
 public interface ILegalNatureRepository : IOpenCnpjDatabaseFactory
 {
     Task Insert(LegalNature legalNature, CancellationToken cancellationToken);
+    Task<LegalNature?> GetByCode(string code, CancellationToken cancellationToken);
 }

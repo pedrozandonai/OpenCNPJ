@@ -9,8 +9,10 @@ public class CountryRepository(IDatabaseFactory databaseFactory) : ICountryRepos
 
     public async Task Insert(Country country, CancellationToken cancellationToken)
     {
-        const string sql = @"INSERT INTO countries (description)
-                                            VALUES (@Description)";
+        const string sql = @"INSERT INTO countries (code,
+                                                    description)
+                                            VALUES (@Code,
+                                                    @Description)";
 
         var command = new CommandDefinition(sql, country, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 

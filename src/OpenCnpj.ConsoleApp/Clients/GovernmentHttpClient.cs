@@ -1,6 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
+using OpenCnpj.ConsoleApp.Application.Batches.BatchFiles.Services;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
 using OpenCnpj.ConsoleApp.Configurations;
 using OpenCnpj.ConsoleApp.Constants;
@@ -11,7 +12,8 @@ using System.Text.RegularExpressions;
 
 namespace OpenCnpj.ConsoleApp.Clients;
 
-public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttings, IBatchService batchService, ILogger logger) : IGovernmentHttpClient
+//TODO: Refatorar 
+public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttings, IBatchService batchService, IBatchFileService batchFileService, ILogger logger) : IGovernmentHttpClient
 {
     public async Task<Result> DownloadCurrentBatch(Batch batch, CancellationToken cancellationToken)
     {
@@ -81,10 +83,11 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
 
     private async Task<Result> DownloadFiles(List<string> urls, Batch batch, CancellationToken cancellationToken)
     {
-        var threadAmount = Environment.ProcessorCount;
+        //TODO: Rever quantas threads serão usadas para fazer o download dos arquivos, pois caso tenha muitos arquivos sendo baixados ao mesmo tempo eles podem dar erro.
+        //var threadAmount = Environment.ProcessorCount;
 
-        if (threadAmount > urls.Count)
-            threadAmount = urls.Count;
+        //if (threadAmount > urls.Count)
+        //    threadAmount = urls.Count;
 
         var retryPolicy = Policy
             .Handle<Exception>()
@@ -113,6 +116,9 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
 
                     var fileName = Path.GetFileName(url);
                     var filePath = Path.Combine(rawDirectory, fileName);
+
+                    //TODO: Por causa do multithreading, isso não esta funcionado, arrumar.
+                    //await batchFileService.CreateNewBatchFile(batch.ID, fileName, filePath, cancellationToken);
 
                     logger.Information("Downloading: {0}", fileName);
 

@@ -18,7 +18,7 @@ public class CityService(IMongoDatabaseFactory mongoDatabaseFactory, ICityReposi
             await cityRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var cityRawRecord in GetAllCitiesRawRecords(cancellationToken))
-                await cityRepository.Insert(City.Create(cityRawRecord.Description), cancellationToken);
+                await cityRepository.Insert(City.Create(cityRawRecord.Code, cityRawRecord.Description), cancellationToken);
 
             await cityRepository.DatabaseFactory.CommitAsync();
         }

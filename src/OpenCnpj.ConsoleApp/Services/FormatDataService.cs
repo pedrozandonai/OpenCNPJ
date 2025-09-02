@@ -1,5 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.ConsoleApp.Application.Cities.Services;
+using OpenCnpj.ConsoleApp.Application.Companies.Services;
 using OpenCnpj.ConsoleApp.Application.Countries.Services;
 using OpenCnpj.ConsoleApp.Application.EconomicActivities.Services;
 using OpenCnpj.ConsoleApp.Application.LegalNatures.Services;
@@ -9,7 +10,7 @@ using OpenCnpj.ConsoleApp.Services.Interfaces;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp.Services;
-public class FormatDataService(ICityService cityService, IEconomicActivityService economicActivityService, ICountryServices countryServices, ILegalNatureService legalNature, IPartnerQualificationService partnerQualificationService, IReasonService reasonService, ILogger logger) : IFormatDataService
+public class FormatDataService(ICityService cityService, IEconomicActivityService economicActivityService, ICountryServices countryServices, ILegalNatureService legalNature, IPartnerQualificationService partnerQualificationService, IReasonService reasonService, ICompanyService companyService, ILogger logger) : IFormatDataService
 {
     private readonly ILogger _logger = logger.ForContext<FormatDataService>();
     public async Task<Result> FormatData(CancellationToken cancellationToken)
@@ -39,6 +40,10 @@ public class FormatDataService(ICityService cityService, IEconomicActivityServic
             var createReasonsResult = await reasonService.CreateReasons(cancellationToken);
             if (createReasonsResult.IsFailure)
                 return createReasonsResult;
+
+            var createCompaniesResult = await companyService.CreateCompanies(cancellationToken);
+            if (createCompaniesResult.IsFailure)
+                return createCompaniesResult;
         }
         catch (Exception ex)
         {

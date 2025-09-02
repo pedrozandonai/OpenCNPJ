@@ -1,13 +1,41 @@
-﻿namespace OpenCnpj.ConsoleApp.Application.Addresses.Domain;
+﻿using CSharpFunctionalExtensions;
+
+namespace OpenCnpj.ConsoleApp.Application.Addresses.Domain;
 public class Address
 {
     public long ID { get; private set; }
     public int AddressTypeID { get; private set; }
     public int CityID { get; private set; }
-    public string Description { get; private set; }
-    public int Number { get; private set; }
+    public string Street { get; private set; }
+    public int? Number { get; private set; }
     public string? Complement { get; private set; }
     public string Neightborhood { get; private set; }
-    public int CepNumber { get; private set; }
+    public int? ZipCode { get; private set; }
     public string FederalUnit { get; private set; }
+
+    private Address(long iD, int addressTypeID, int cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
+    {
+        ID = iD;
+        AddressTypeID = addressTypeID;
+        CityID = cityID;
+        Street = street;
+        Number = number;
+        Complement = complement;
+        Neightborhood = neightborhood;
+        ZipCode = zipCode;
+        FederalUnit = federalUnit;
+    }
+
+    public static Address Create(int addressTypeID, int cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
+        => new(0, addressTypeID, cityID, street, number, complement, neightborhood, zipCode, federalUnit);
+
+    public Result SetID(long id)
+    {
+        if (ID != 0)
+            return Result.Failure("The ID for the record 'Address' already has been set.");
+
+        ID = id;
+
+        return Result.Success();
+    }
 }

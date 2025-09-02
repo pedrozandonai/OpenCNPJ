@@ -18,7 +18,7 @@ public class LegalNatureService(IMongoDatabaseFactory mongoDatabaseFactory, ILeg
             await legalNatureRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var legalNatureRawRecordRecord in GetAllLegalNatureRawRecords(cancellationToken))
-                await legalNatureRepository.Insert(LegalNature.Create(legalNatureRawRecordRecord.Description), cancellationToken);
+                await legalNatureRepository.Insert(LegalNature.Create(legalNatureRawRecordRecord.Code, legalNatureRawRecordRecord.Description), cancellationToken);
 
             await legalNatureRepository.DatabaseFactory.CommitAsync();
         }

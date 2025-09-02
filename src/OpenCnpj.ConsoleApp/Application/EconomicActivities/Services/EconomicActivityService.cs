@@ -19,7 +19,7 @@ public class EconomicActivityService(IEconomicActivityRepository economicActivit
             await economicActivityRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var economicActivityRawRecord in GetAllEconomicActivitiesRawRecords(cancellationToken))
-                await economicActivityRepository.Insert(EconomicActivity.Create(economicActivityRawRecord.Description), cancellationToken);
+                await economicActivityRepository.Insert(EconomicActivity.Create(economicActivityRawRecord.Code, economicActivityRawRecord.Description), cancellationToken);
 
             await economicActivityRepository.DatabaseFactory.CommitAsync();
         }

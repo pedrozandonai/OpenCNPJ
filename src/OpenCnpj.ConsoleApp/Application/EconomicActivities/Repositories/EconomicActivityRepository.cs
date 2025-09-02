@@ -9,8 +9,10 @@ public class EconomicActivityRepository(IDatabaseFactory databaseFactory) : IEco
 
     public async Task Insert(EconomicActivity economicActivity, CancellationToken cancellationToken)
     {
-        const string sql = @"INSERT INTO economic_activities (description)
-                                                      VALUES (@Description)";
+        const string sql = @"INSERT INTO economic_activities (code,
+                                                              description)
+                                                      VALUES (@Code,
+                                                              @Description)";
 
         var command = new CommandDefinition(sql, economicActivity, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 

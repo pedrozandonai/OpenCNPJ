@@ -3,11 +3,19 @@
 namespace OpenCnpj.ConsoleApp.Application.Cities.Domain;
 public class City : BaseRecord
 {
-    private City(int id, string description)
+    public string Code { get; init; }
+
+    private City(int id, string code, string description)
         : base(id, description)
+    {
+        Code = code;
+    }
+
+    private City()
+        : base()
     {
     }
 
-    public static City Create(string description)
-        => new (0, description);
+    public static City Create(string code, string description)
+        => new (0, code, description);
 }

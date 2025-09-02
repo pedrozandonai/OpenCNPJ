@@ -18,7 +18,7 @@ public class CountryServices(IMongoDatabaseFactory mongoDatabaseFactory, ICountr
             await countryRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var countryRawRecord in GetAllCountriesRawRecords(cancellationToken))
-                await countryRepository.Insert(Country.Create(countryRawRecord.Description), cancellationToken);
+                await countryRepository.Insert(Country.Create(countryRawRecord.Code, countryRawRecord.Description), cancellationToken);
 
             await countryRepository.DatabaseFactory.CommitAsync();
         }

@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using OpenCnpj.ConsoleApp.Application.Addresses.Services;
+using OpenCnpj.ConsoleApp.Application.AddressTypes.Services;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
+using OpenCnpj.ConsoleApp.Application.Batches.BatchFiles.Services;
 using OpenCnpj.ConsoleApp.Application.Cities.Services;
+using OpenCnpj.ConsoleApp.Application.Companies.Services;
 using OpenCnpj.ConsoleApp.Application.Countries.Services;
 using OpenCnpj.ConsoleApp.Application.EconomicActivities.Services;
 using OpenCnpj.ConsoleApp.Application.LegalNatures.Services;
@@ -27,6 +31,10 @@ public static class ServicesInjection
         services.AddTransient<ILegalNatureService, LegalNatureService>();
         services.AddTransient<IPartnerQualificationService, PartnerQualificationService>();
         services.AddTransient<IReasonService, ReasonService>();
+        services.AddTransient<IBatchFileService, BatchFileService>();
+        services.AddTransient<IAddressTypeService, AddressTypeService>();
+        services.AddTransient<IAddressService, AddressService>();
+        services.AddTransient<ICompanyService, CompanyService>();
 
         // *--Strategies for CSV Files--*
         services.AddScoped<CsvStrategyFactory>();

@@ -18,6 +18,19 @@ public class InitialMigration : Migration
             .WithColumn("identifier").AsString(50).NotNullable().Unique()
             .WithColumn("status").AsString(30).NotNullable()
             .WithColumn("application_last_step_id").AsInt32().NotNullable();
+        
+        Create.Table("file_statuses")
+            .WithColumn("id").AsInt32().PrimaryKey()
+            .WithColumn("description").AsString().NotNullable();
+
+        CreateFileStatuses();
+
+        Create.Table("batch_files")
+            .WithColumn("id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("batch_id").AsInt32().NotNullable()
+            .WithColumn("file_status_id").AsInt32().NotNullable()
+            .WithColumn("file_name").AsString(50).NotNullable()
+            .WithColumn("file_path").AsString(255).NotNullable();
 
         Create.Table("age_ranges")
             .WithColumn("id").AsInt32().PrimaryKey()
@@ -51,26 +64,32 @@ public class InitialMigration : Migration
 
         Create.Table("countries")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("cities")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("partner_qualifications")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("legal_natures")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("economic_activities")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("reasons")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("adress_types")
@@ -102,11 +121,11 @@ public class InitialMigration : Migration
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
             .WithColumn("address_type_id").AsInt64().NotNullable()
             .WithColumn("city_id").AsInt64().NotNullable()
-            .WithColumn("description").AsString().NotNullable()
-            .WithColumn("number").AsInt32().NotNullable()
+            .WithColumn("street").AsString().NotNullable()
+            .WithColumn("number").AsInt32().Nullable()
             .WithColumn("complement").AsString().Nullable()
             .WithColumn("neighborhood").AsString().NotNullable()
-            .WithColumn("cep_number").AsInt16().NotNullable()
+            .WithColumn("zip_code").AsInt32().Nullable()
             .WithColumn("federal_unit").AsString().NotNullable();
 
         Create.Table("company")
@@ -158,6 +177,11 @@ public class InitialMigration : Migration
         Create.ForeignKey("FK_batch_application_steps")
             .FromTable("batches").ForeignColumn("application_last_step_id")
             .ToTable("application_steps").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_batch_files_file_statuses")
+            .FromTable("batch_files").ForeignColumn("file_status_id")
+            .ToTable("file_statuses").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
         
         Create.ForeignKey("FK_contacts_phones")
@@ -321,6 +345,15 @@ public class InitialMigration : Migration
         Insert.IntoTable("application_steps").Row(new { id = 2, description = "EXTRAINDO ARQUIVOS BRUTOS" });
         Insert.IntoTable("application_steps").Row(new { id = 3, description = "PROCESSANDO DADOS BRUTOS" });
         Insert.IntoTable("application_steps").Row(new { id = 4, description = "FORMATANDO DADOS BRUTOS" });
+    }
+
+    private void CreateFileStatuses()
+    {
+        Insert.IntoTable("file_statuses").Row(new { id = 1, description = "FAZENDO DOWNLOAD" });
+        Insert.IntoTable("file_statuses").Row(new { id = 2, description = "ARQUIVO CRIADO" });
+        Insert.IntoTable("file_statuses").Row(new { id = 3, description = "PROCESSANDO ARQUIVO" });
+        Insert.IntoTable("file_statuses").Row(new { id = 4, description = "ARQUIVO PROCESSADO" });
+        Insert.IntoTable("file_statuses").Row(new { id = 5, description = "ARQUIVO DELETADO" });
     }
 
     private void InsertAgeRanges()

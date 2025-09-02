@@ -18,7 +18,7 @@ public class ReasonService(IMongoDatabaseFactory mongoDatabaseFactory, IReasonRe
             await reasonRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var reasonRawRecordRecord in GetAllPartnerQualificationRawRecords(cancellationToken))
-                await reasonRepository.Insert(Reason.Create(reasonRawRecordRecord.Description), cancellationToken);
+                await reasonRepository.Insert(Reason.Create(reasonRawRecordRecord.Code, reasonRawRecordRecord.Description), cancellationToken);
 
             await reasonRepository.DatabaseFactory.CommitAsync();
         }

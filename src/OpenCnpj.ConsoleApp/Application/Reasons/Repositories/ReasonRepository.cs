@@ -8,8 +8,10 @@ public class ReasonRepository(IDatabaseFactory databaseFactory) : IReasonReposit
     public IDatabaseFactory DatabaseFactory => databaseFactory;
     public async Task Insert(Reason reason, CancellationToken cancellationToken)
     {
-        const string sql = @"INSERT INTO reasons (description)
-                                          VALUES (@Description)";
+        const string sql = @"INSERT INTO reasons (code,
+                                                  description)
+                                          VALUES (@Code,
+                                                  @Description)";
 
         var command = new CommandDefinition(sql, reason, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 

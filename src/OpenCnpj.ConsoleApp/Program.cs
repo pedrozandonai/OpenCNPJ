@@ -15,27 +15,25 @@ internal static class Program
             .AddEnvironmentVariables()
             .Build();
 
-        Log.Logger = new LoggerConfiguration()
+        var logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
-            .CreateLogger();
+            .CreateBootstrapLogger();
 
         try
         {
-            Log.Information("Application Started!");
+            logger.Information("Application Started!");
 
             var host = CreateHost(configuration);
 
-            await HealthCheckWaiter.WaitForDatabasesAsync(host.Services);
-
-            RunMigrations(host.Services);
+            await RunMigrations(host.Services);
 
             await host.RunAsync();
 
-            Log.Information("The application has finished.");
+            logger.Information("The application has finished.");
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "An error occurred while the application was running.");
+            logger.Fatal(ex, "An error occurred while the application was running.");
         }
         finally
         {
@@ -58,9 +56,11 @@ internal static class Program
             .Build();
     }
 
-    private static void RunMigrations(IServiceProvider serviceProvider)
+    private static async Task RunMigrations(IServiceProvider serviceProvider)
     {
-        DatabaseInjection.UpdateDatabase(serviceProvider);
-    }
+        // Aguarda os bancos de dados subirem antes de executar os migrations caso a execução tenha se dado pelo docker composer.
+        await HealthCheckWaiter.WaitForDatabasesAsync(serviceProvider);
 
+        await DatabaseInjection.UpdateDatabase(serviceProvider);
+    }
 }

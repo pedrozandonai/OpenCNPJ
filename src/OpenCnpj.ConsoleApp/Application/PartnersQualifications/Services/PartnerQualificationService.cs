@@ -18,7 +18,7 @@ public class PartnerQualificationService(IMongoDatabaseFactory mongoDatabaseFact
             await partnerQualificationRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var partnerQualificationRawRecordRecord in GetAllPartnerQualificationRawRecords(cancellationToken))
-                await partnerQualificationRepository.Insert(PartnerQualification.Create(partnerQualificationRawRecordRecord.Description), cancellationToken);
+                await partnerQualificationRepository.Insert(PartnerQualification.Create(partnerQualificationRawRecordRecord.Code, partnerQualificationRawRecordRecord.Description), cancellationToken);
 
             await partnerQualificationRepository.DatabaseFactory.CommitAsync();
         }
