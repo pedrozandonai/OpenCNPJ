@@ -4,13 +4,18 @@ using OpenCnpj.ConsoleApp.Application.Addresses.Services;
 using OpenCnpj.ConsoleApp.Application.Companies.Domain;
 using OpenCnpj.ConsoleApp.Application.Companies.Models;
 using OpenCnpj.ConsoleApp.Application.Companies.Repositories;
+using OpenCnpj.ConsoleApp.Application.Countries.Repositories;
+using OpenCnpj.ConsoleApp.Application.EconomicActivities.Repositories;
 using OpenCnpj.ConsoleApp.Application.LegalNatures.Repositories;
+using OpenCnpj.ConsoleApp.Application.PartnersQualifications.Repositories;
 using OpenCnpj.ConsoleApp.Application.RawRecords;
+using OpenCnpj.ConsoleApp.Application.SpecialSituations.Domain;
+using OpenCnpj.ConsoleApp.Application.SpecialSituations.Repositories;
 using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp.Application.Companies.Services;
-public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, ICompanyRepository companyRepository, IAddressService addressService, ILegalNatureRepository legalNatureRepository, ILogger logger) : ICompanyService
+public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, ICompanyRepository companyRepository, IAddressService addressService, ILegalNatureRepository legalNatureRepository, IPartnerQualificationRepository partnerQualificationRepository, ICountryRepository countryRepository, ISpecialSituationRepository specialSituationRepository, IEconomicActivityRepository economicActivityRepository, ILogger logger) : ICompanyService
 {
     private readonly ILogger _logger = logger.ForContext<CompanyService>();
     public async Task<Result> CreateCompanies(CancellationToken cancellationToken)
@@ -58,9 +63,38 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, ICompany
                                 continue;
                             }
 
+                            var mainPartnerQualificationID = await partnerQualificationRepository.GetByCode(companyRawRecord.LegalNatureCode, cancellationToken);
+                            if (mainPartnerQualificationID == null)
+                            {
+                                _logger.Warning("Unable to fetch the main partner qualification of the company.");
+                                continue;
+                            }
+                            
+                            var country = await countryRepository.GetByCode(establishmentRawRecord.CountryCode, cancellationToken);
+                            if (country == null)
+                            {
+                                _logger.Warning("Unable to fetch the country of the company.");
+                                continue;
+                            }
 
+                            long? specialSituationID = null;
+                            if (!string.IsNullOrEmpty(establishmentRawRecord.SpecialStatus))
+                            {
+                                specialSituationID = await specialSituationRepository.Insert(SpecialSituation.Create(establishmentRawRecord.SpecialStatus, establishmentRawRecord.SpecialStatusDate!.Value), cancellationToken);
+                            }
+                            
+                            var mainEconomicActivity = await economicActivityRepository.GetByCode(establishmentRawRecord.MainCnae, cancellationToken);
+                            if (mainEconomicActivity == null)
+                            {
+                                _logger.Warning("Unable to fetch the country of the company.");
+                                continue;
+                            }
 
-                            //var company = Company.Create(legalNature.ID, );
+                            string identifier = string.Format("{0}{1}{2}", establishmentRawRecord.BasicCnpj, establishmentRawRecord.OrderCnpj, establishmentRawRecord.CheckDigitCnpj);
+
+                            var company = Company.Create(legalNature.ID, mainPartnerQualificationID.ID, (int)companyRawRecord.CompanySize, (int)establishmentRawRecord.HeadOfficeOrBranch, country.ID, address.Value.ID, specialSituationID, mainEconomicActivity.ID, identifier, companyRawRecord.CorporateName, companyRawRecord.ShareCapital, companyRawRecord.ResponsibleFederativeEntity, establishmentRawRecord.TradeName, DateOnly.FromDateTime(establishmentRawRecord.RegistrationStatusDate.Value), establishmentRawRecord.ForeignCityName, establishmentRawRecord.StartActivityDate.Value);
+                            
+                            await companyRepository.Insert(company, cancellationToken);
                         }
                     }
                 }

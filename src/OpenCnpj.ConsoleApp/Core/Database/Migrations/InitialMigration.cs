@@ -134,7 +134,6 @@ public class InitialMigration : Migration
             .WithColumn("main_partner_qualification_id").AsInt64().NotNullable()
             .WithColumn("company_size_id").AsInt32().NotNullable()
             .WithColumn("company_type_id").AsInt32().NotNullable()
-            .WithColumn("reason_id").AsInt64().NotNullable()
             .WithColumn("country_id").AsInt64().NotNullable()
             .WithColumn("address_id").AsInt64().NotNullable()
             .WithColumn("main_economic_activity_id").AsInt64().NotNullable()

@@ -10,6 +10,7 @@ using OpenCnpj.ConsoleApp.Application.EconomicActivities.Repositories;
 using OpenCnpj.ConsoleApp.Application.LegalNatures.Repositories;
 using OpenCnpj.ConsoleApp.Application.PartnersQualifications.Repositories;
 using OpenCnpj.ConsoleApp.Application.Reasons.Repositories;
+using OpenCnpj.ConsoleApp.Application.SpecialSituations.Repositories;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class RepositoriesInjection
@@ -27,6 +28,8 @@ public static class RepositoriesInjection
         services.AddTransient<IBatchFileRepository, BatchFileRepository>();
         services.AddTransient<IAddressTypeRepository, AddressTypeRepository>();
         services.AddTransient<IAddressRepository, AddressRepository>();
+        services.AddTransient<ISpecialSituationRepository, SpecialSituationRepository>();
+        services.AddTransient<IEconomicActivityRepository, EconomicActivityRepository>();
 
         return services;
     }

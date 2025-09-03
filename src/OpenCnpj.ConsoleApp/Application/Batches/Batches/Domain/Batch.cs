@@ -11,6 +11,10 @@ public class Batch
     public EApplicationStep ApplicationLastStepID { get; private set; }
     public string? Directory { get; private set; }
 
+    private Batch()
+    {
+    }
+
     private Batch(string identifier)
     {
         Identifier = identifier;
