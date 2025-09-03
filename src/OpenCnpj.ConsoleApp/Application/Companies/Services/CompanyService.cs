@@ -18,6 +18,7 @@ using OpenCnpj.ConsoleApp.Application.PartnersQualifications.Repositories;
 using OpenCnpj.ConsoleApp.Application.RawRecords;
 using OpenCnpj.ConsoleApp.Application.SpecialSituations.Domain;
 using OpenCnpj.ConsoleApp.Application.SpecialSituations.Repositories;
+using OpenCnpj.ConsoleApp.Configurations;
 using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
 using OpenCnpj.ConsoleApp.Extensions;
 using Serilog;
@@ -25,7 +26,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 
 namespace OpenCnpj.ConsoleApp.Application.Companies.Services;
-public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IServiceProvider serviceProvider, ILogger logger) : ICompanyService
+public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IServiceProvider serviceProvider, TweakSettings tweakSettings, ILogger logger) : ICompanyService
 {
     private readonly ConcurrentDictionary<string, LegalNature?> _legalNatureCache = new();
     private readonly ConcurrentDictionary<long, PartnerQualification?> _partnerQualificationCache = new();
@@ -39,9 +40,9 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         try
         {
             var companiesCollection = mongoDatabaseFactory.Database.GetCollection<CompanyRawRecord>("CompaniesRaw");
-            const int pageSize = 1000;
+            int pageSize = tweakSettings.FormatRawDataSettings.RecordsBatchAmount;
             var page = 0;
-            const int maxParallelCompanies = 80; // ajuste conforme seu postgres
+            int maxParallelCompanies = tweakSettings.FormatRawDataSettings.AmountAtTheSameTime;
             var companySemaphore = new SemaphoreSlim(maxParallelCompanies);
 
             await PreloadCaches(cancellationToken);
@@ -72,12 +73,10 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
                         await companySemaphore.WaitAsync(cancellationToken);
 
-                        // inicia task por empresa (cada task cria seu scope)
                         companyTasks.Add(ProcessCompany(companyWithEstablishments, companySemaphore, cancellationToken));
                     }
                 }
 
-                // espera as empresas da página terminarem
                 await Task.WhenAll(companyTasks);
 
                 if (!anyInPage) break;
@@ -104,17 +103,10 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
             var companiesToInsert = new List<Company?>();
 
-            var teste = new List<Task<Company?>>();
+            await dbFactory.BeginAsync();
 
-            // TODO: Terminar de fazer esse teste.
             foreach (var establishmentRawRecord in companyWithEstablishments.Establishments)
-            {
-                teste.Add(ProcessEstablishments(companyWithEstablishments, establishmentRawRecord, dbFactory, services, cancellationToken));
-                if (dbFactory.TransactionIsOpen)
-                    await dbFactory.RollbackAsync();
-
-            }
-            //companiesToInsert.Add(await ProcessEstablishments(companyWithEstablishments, establishmentRawRecord, services, cancellationToken));
+                companiesToInsert.Add(await ProcessEstablishments(companyWithEstablishments, establishmentRawRecord, services, cancellationToken));
 
             await dbFactory.BeginAsync();
 
@@ -128,7 +120,6 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             _logger.Error(ex, "An error when creating company.");
             try
             {
-                // tentativa de rollback (pega a factory do scope se possível)
                 using var scope = serviceProvider.CreateAsyncScope();
                 var dbFactory = scope.ServiceProvider.GetRequiredService<IDatabaseFactory>();
                 if (dbFactory != null)
@@ -142,10 +133,8 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         }
     }
 
-    private async Task<Company?> ProcessEstablishments(CompanyRawRecord companyRawRecord, EstablishmentRawRecord establishmentRawRecord, IDatabaseFactory databaseFactory, ServiceResolvers services, CancellationToken cancellationToken)
+    private async Task<Company?> ProcessEstablishments(CompanyRawRecord companyRawRecord, EstablishmentRawRecord establishmentRawRecord, ServiceResolvers services, CancellationToken cancellationToken)
     {
-        await databaseFactory.BeginAsync();
-
         if (cancellationToken.IsCancellationRequested)
             return null;
 
@@ -208,8 +197,6 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             establishmentRawRecord.StartActivityDate!.Value
         );
 
-        await databaseFactory.RollbackAsync();
-
         return company;
     }
 
@@ -253,7 +240,6 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
             await dbFactory.BeginAsync();
 
-            // Pre-carrega dados mais comuns SEQUENCIALMENTE para evitar conflitos
             await PreloadLegalNatures(services.LegalNatureRepository, cancellationToken);
             await PreloadEconomicActivities(services.EconomicActivityRepository, cancellationToken);
             await PreloadPartnerQualification(services.PartnerQualificationRepository, cancellationToken);

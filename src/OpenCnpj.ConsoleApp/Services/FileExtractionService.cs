@@ -69,10 +69,8 @@ public class FileExtractionService(IBatchService batchService, ILogger logger) :
                 }
 
                 var entry = archive.Entries[0];
-                var extension = Path.GetExtension(entry.FullName);
                 var targetPath = Path.Combine(extractedDirectory, baseName);
 
-                // se já existir, sobrescreve
                 if (File.Exists(targetPath))
                     File.Delete(targetPath);
 

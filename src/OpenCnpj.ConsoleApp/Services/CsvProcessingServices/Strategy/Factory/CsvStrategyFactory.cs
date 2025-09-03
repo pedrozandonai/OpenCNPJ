@@ -29,20 +29,20 @@ public class CsvStrategyFactory
 
         // Estratégias de dados de referência
         var mongoDatabaseFactory = _serviceProvider.GetRequiredService<IMongoDatabaseFactory>();
-        var batchSettings = _serviceProvider.GetRequiredService<BatchSettings>();
+        var tweakSettings = _serviceProvider.GetRequiredService<TweakSettings>();
         var logger = _serviceProvider.GetRequiredService<ILogger>();
 
-        _strategies["Paises"] = new ReferenceDataProcessingStrategy<CountryRawRecord>("Paises", mongoDatabaseFactory, batchSettings, logger);
+        _strategies["Paises"] = new ReferenceDataProcessingStrategy<CountryRawRecord>("Paises", mongoDatabaseFactory, tweakSettings, logger);
 
-        _strategies["Municipios"] = new ReferenceDataProcessingStrategy<CityRawRecord>("Municipios", mongoDatabaseFactory, batchSettings, logger);
+        _strategies["Municipios"] = new ReferenceDataProcessingStrategy<CityRawRecord>("Municipios", mongoDatabaseFactory, tweakSettings, logger);
 
-        _strategies["Qualificacoes"] = new ReferenceDataProcessingStrategy<PartnerQualificationRawRecord>("Qualificacoes", mongoDatabaseFactory, batchSettings, logger);
+        _strategies["Qualificacoes"] = new ReferenceDataProcessingStrategy<PartnerQualificationRawRecord>("Qualificacoes", mongoDatabaseFactory, tweakSettings, logger);
 
-        _strategies["Naturezas"] = new ReferenceDataProcessingStrategy<LegalNatureRawRecord>("Naturezas", mongoDatabaseFactory, batchSettings, logger);
+        _strategies["Naturezas"] = new ReferenceDataProcessingStrategy<LegalNatureRawRecord>("Naturezas", mongoDatabaseFactory, tweakSettings, logger);
 
-        _strategies["Cnaes"] = new ReferenceDataProcessingStrategy<CnaeRawRecord>("Cnaes", mongoDatabaseFactory, batchSettings, logger);
+        _strategies["Cnaes"] = new ReferenceDataProcessingStrategy<CnaeRawRecord>("Cnaes", mongoDatabaseFactory, tweakSettings, logger);
 
-        _strategies["Motivos"] = new ReferenceDataProcessingStrategy<ReasonRawRecord>("Motivos", mongoDatabaseFactory, batchSettings, logger);
+        _strategies["Motivos"] = new ReferenceDataProcessingStrategy<ReasonRawRecord>("Motivos", mongoDatabaseFactory, tweakSettings, logger);
     }
 
     public ICsvProcessingStrategy? GetStrategy(string fileName)

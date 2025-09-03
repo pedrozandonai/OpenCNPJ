@@ -7,13 +7,13 @@ namespace OpenCnpj.ConsoleApp.Helpers;
 public class MongoDbBatchInsert<T>
 {
     private readonly IMongoDatabaseFactory _mongoDatabaseFactory;
-    private readonly BatchSettings _batchSettings;
+    private readonly TweakSettings _tweakSettings;
     private readonly ILogger _logger;
 
-    public MongoDbBatchInsert(IMongoDatabaseFactory mongoDatabaseFactory, BatchSettings batchSettings, ILogger logger)
+    public MongoDbBatchInsert(IMongoDatabaseFactory mongoDatabaseFactory, TweakSettings tweakSettings, ILogger logger)
     {
         _mongoDatabaseFactory=mongoDatabaseFactory;
-        _batchSettings=batchSettings;
+        _tweakSettings=tweakSettings;
         _logger=logger;
     }
 
@@ -23,13 +23,13 @@ public class MongoDbBatchInsert<T>
             .Database
             .GetCollection<T>(collectionName);
 
-        var buffer = new List<T>(_batchSettings.Size);
+        var buffer = new List<T>(_tweakSettings.RawFilesProcessingSettings.RecordsBatchAmount);
 
         foreach (var record in records)
         {
             buffer.Add(record);
 
-            if (buffer.Count >= _batchSettings.Size)
+            if (buffer.Count >= _tweakSettings.RawFilesProcessingSettings.RecordsBatchAmount)
             {
                 await InsertBatchOptimized(collection, buffer, cancellationToken);
                 buffer.Clear();
@@ -50,7 +50,7 @@ public class MongoDbBatchInsert<T>
             await collection.InsertManyAsync(records,
                 new InsertManyOptions
                 {
-                    IsOrdered = false,  // Continua mesmo se alguns falharem
+                    IsOrdered = false,
                     BypassDocumentValidation = false
                 },
                 cancellationToken: cancellationToken);
@@ -61,7 +61,7 @@ public class MongoDbBatchInsert<T>
         {
             var otherErrors = ex.WriteErrors.Where(e => e.Code != 11000).ToList();
 
-            if (otherErrors.Count!=0)
+            if (otherErrors.Count != 0)
             {
                 _logger.Error(ex, "Critical errors during bulk insert: {@Errors}",
                     otherErrors.Select(e => new { e.Code, e.Message }));
@@ -69,48 +69,4 @@ public class MongoDbBatchInsert<T>
             }
         }
     }
-
-    //private async Task InsertBatchOptimized(IMongoCollection<T> collection,
-    //    List<T> records, CancellationToken cancellationToken)
-    //{
-    //    try
-    //    {
-    //        // Primeira tentativa: inserção rápida sem verificações
-    //        await collection.InsertManyAsync(records,
-    //            new InsertManyOptions
-    //            {
-    //                IsOrdered = false,  // Continua mesmo se alguns falharem
-    //                BypassDocumentValidation = false
-    //            },
-    //            cancellationToken: cancellationToken);
-
-    //        _logger.Debug("Successfully inserted {Count} records", records.Count);
-    //    }
-    //    catch (MongoBulkWriteException ex)
-    //    {
-    //        // Separar sucessos de falhas
-    //        //var insertedCount = ex.Result.InsertedCount;
-    //        var duplicateErrors = ex.WriteErrors.Where(e => e.Code == 11000).ToList();
-    //        var otherErrors = ex.WriteErrors.Where(e => e.Code != 11000).ToList();
-
-    //        if (otherErrors.Any())
-    //        {
-    //            _logger.Error(ex, "Critical errors during bulk insert: {@Errors}",
-    //                otherErrors.Select(e => new { e.Code, e.Message }));
-    //            throw;
-    //        }
-
-    //        // Log apenas se houver muitas duplicatas (pode indicar problema)
-    //        //if (duplicateErrors.Count > records.Count * 0.1) // Mais de 10% duplicatas
-    //        //{
-    //        //    _logger.Warning("High duplicate rate: {InsertedCount} inserted, {DuplicateCount} duplicates of {TotalCount} total",
-    //        //        insertedCount, duplicateErrors.Count, records.Count);
-    //        //}
-    //        //else
-    //        //{
-    //        //    _logger.Debug("Batch completed: {InsertedCount} inserted, {DuplicateCount} duplicates",
-    //        //        insertedCount, duplicateErrors.Count);
-    //        //}
-    //    }
-    //}
 }

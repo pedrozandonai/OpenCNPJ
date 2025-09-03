@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using OpenCnpj.ConsoleApp.Clients;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
+using System.Net.Http.Headers;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class ClientsInjection

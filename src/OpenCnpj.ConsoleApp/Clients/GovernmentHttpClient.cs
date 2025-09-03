@@ -1,20 +1,22 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
 using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
-using OpenCnpj.ConsoleApp.Application.Batches.BatchFiles.Services;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
 using OpenCnpj.ConsoleApp.Configurations;
 using OpenCnpj.ConsoleApp.Constants;
 using Polly;
 using Serilog;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
 namespace OpenCnpj.ConsoleApp.Clients;
 
 //TODO: Refatorar 
-public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttings, IBatchService batchService, IBatchFileService batchFileService, ILogger logger) : IGovernmentHttpClient
+public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttings, IBatchService batchService, TweakSettings tweakSettings, ILogger logger) : IGovernmentHttpClient
 {
+    private readonly ILogger _logger = logger.ForContext<IGovernmentHttpClient>();
+
     public async Task<Result> DownloadCurrentBatch(Batch batch, CancellationToken cancellationToken)
     {
         try
@@ -28,14 +30,14 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
             //string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Identifier);
             string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, "2025-08");
 
-            logger.Information("Fetching download URLs from: {0}", currentGovDataUrl);
+            _logger.Information("Fetching download URLs from: {0}", currentGovDataUrl);
 
             var response = await httpClient.GetAsync(currentGovDataUrl, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 string errorMessage = string.Format("The data from the government could not be found on this batch date: {0}", batch.Identifier);
 
-                logger.Warning(errorMessage);
+                _logger.Warning(errorMessage);
 
                 return Result.Failure(errorMessage);
             }
@@ -44,7 +46,7 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
 
             var currentCsvUrlsGovData = ExtractDownloadUrls(htmlContent, currentGovDataUrl);
 
-            logger.Information("Found {0} URL's for downloading.", currentCsvUrlsGovData.Count);
+            _logger.Information("Found {0} URL's for downloading.", currentCsvUrlsGovData.Count);
 
             await DownloadFiles(currentCsvUrlsGovData, batch, cancellationToken);
 
@@ -54,7 +56,7 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
         {
             const string errorMessage = "An error occurred while downloading the government files.";
 
-            logger.Error(ex, errorMessage);
+            _logger.Error(ex, errorMessage);
 
             return Result.Failure(errorMessage);
         }
@@ -83,29 +85,29 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
 
     private async Task<Result> DownloadFiles(List<string> urls, Batch batch, CancellationToken cancellationToken)
     {
-        //TODO: Rever quantas threads serão usadas para fazer o download dos arquivos, pois caso tenha muitos arquivos sendo baixados ao mesmo tempo eles podem dar erro.
-        //var threadAmount = Environment.ProcessorCount;
-
-        //if (threadAmount > urls.Count)
-        //    threadAmount = urls.Count;
+        if (tweakSettings.DownloadSettings.AmountAtTheSameTime > urls.Count)
+        {
+            _logger.Warning("the amount of downloads at the same time is higher than the downloads itself. lowering to match the amount of downloads.");
+            tweakSettings.DownloadSettings.AmountAtTheSameTime = urls.Count;
+        }
 
         var retryPolicy = Policy
             .Handle<Exception>()
             .Or<HttpRequestException>()
             .WaitAndRetryAsync(
-                retryCount: 5,
-                sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                retryCount: tweakSettings.DownloadSettings.RetryFailureDownloadsAmount,
+                sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, tweakSettings.DownloadSettings.ExponencialSecondsIntervalBetweenRetries)),
                 onRetry: (ex, ts) =>
                 {
-                    Console.WriteLine($"Retry after {ts.TotalSeconds}s due to {ex.Message}");
+                    _logger.Warning("retry after {0}s due to {1}", ts.TotalSeconds, ex.Message);
                 }
             );
 
-        var semaphore = new SemaphoreSlim(10);
+        var semaphore = new SemaphoreSlim(tweakSettings.DownloadSettings.AmountAtTheSameTime);
 
         var tasks = urls.Select(async url =>
         {
-            await semaphore.WaitAsync();
+            await semaphore.WaitAsync(cancellationToken);
             try
             {
                 await retryPolicy.ExecuteAsync(async () =>
@@ -116,49 +118,45 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
 
                     var fileName = Path.GetFileName(url);
                     var filePath = Path.Combine(rawDirectory, fileName);
+                    var tempFilePath = filePath + ".partial";
 
-                    //TODO: Por causa do multithreading, isso não esta funcionado, arrumar.
-                    //await batchFileService.CreateNewBatchFile(batch.ID, fileName, filePath, cancellationToken);
+                    long existingLength = 0;
+                    if (File.Exists(tempFilePath))
+                        existingLength = new FileInfo(tempFilePath).Length;
 
-                    logger.Information("Downloading: {0}", fileName);
+                    using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    if (existingLength > 0)
+                        request.Headers.Range = new RangeHeaderValue(existingLength, null);
 
-                    using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                    response.EnsureSuccessStatusCode();
+                    using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-                    var totalBytes = response.Content.Headers.ContentLength;
-                    var buffer = new byte[81920]; // 80KB (bom tamanho para streaming)
-                    long totalRead = 0;
-                    int read;
-
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    await using var fileStream = File.Create(filePath);
-
-                    var lastLoggedMb = 0;
-
-                    while ((read = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable)
                     {
-                        await fileStream.WriteAsync(buffer, 0, read);
-                        totalRead += read;
+                        _logger.Warning("Range is invalid for {0}, restarting.", fileName);
+                        File.Delete(tempFilePath);
 
-                        var downloadedMb = (int)(totalRead / 1024 / 1024);
-                        if (downloadedMb >= lastLoggedMb + 10) // log a cada 10MB
-                        {
-                            logger.Information("Downloading {0}: {1:N0} MB of {2:N0} MB",
-                                fileName,
-                                downloadedMb,
-                                totalBytes.HasValue ? totalBytes.Value / 1024 / 1024 : -1);
-                            lastLoggedMb = downloadedMb;
-                        }
+                        using var freshResponse = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                        freshResponse.EnsureSuccessStatusCode();
+
+                        await SaveToFile(freshResponse, tempFilePath, fileName, 0, cancellationToken);
+                    }
+                    else
+                    {
+                        response.EnsureSuccessStatusCode();
+                        await SaveToFile(response, tempFilePath, fileName, existingLength, cancellationToken);
                     }
 
-                    logger.Information("Download concluded: {0} ({1:N0} MB)",
-                        fileName,
-                        totalRead / 1024 / 1024);
+                    if (File.Exists(filePath))
+                        File.Delete(filePath);
+
+                    File.Move(tempFilePath, filePath);
+
+                    _logger.Information("Download concluded: {0}", fileName);
                 });
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Error while downloading the URL: {0}", url);
+                _logger.Error(ex, "Error while downloading the url: {0}", url);
             }
             finally
             {
@@ -170,5 +168,38 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
 
         return Result.Success();
     }
+
+    private async Task SaveToFile(HttpResponseMessage response, string filePath, string fileName, long existingLength, CancellationToken cancellationToken)
+    {
+        var totalBytes = response.Content.Headers.ContentLength.HasValue
+            ? response.Content.Headers.ContentLength + existingLength
+            : null;
+
+        var buffer = new byte[81920];
+        long totalRead = existingLength;
+        int read;
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await using var fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.None);
+
+        var lastLoggedMb = (int)(existingLength / 1024 / 1024);
+
+        while ((read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken)) > 0)
+        {
+            await fileStream.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+            totalRead += read;
+
+            var downloadedMb = (int)(totalRead / 1024 / 1024);
+            if (downloadedMb >= lastLoggedMb + tweakSettings.DownloadSettings.MbAmountToLog)
+            {
+                _logger.Information("Downloading {0}: {1:N0} mb of {2:N0} mb",
+                    fileName,
+                    downloadedMb,
+                    totalBytes.HasValue ? totalBytes.Value / 1024 / 1024 : -1);
+                lastLoggedMb = downloadedMb;
+            }
+        }
+    }
+
 }
 

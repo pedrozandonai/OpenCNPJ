@@ -9,7 +9,7 @@ using OpenCnpj.ConsoleApp.Mappers;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies;
-internal class SimpleDataProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactory, BatchSettings batchSettings, ILogger logger) : ICsvProcessingStrategy
+internal class SimpleDataProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactory, TweakSettings tweakSettings, ILogger logger) : ICsvProcessingStrategy
 {
     private readonly ILogger _logger = logger.ForContext<SimpleDataProcessingStrategy>();
     public string FilePattern => "Simples";
@@ -21,10 +21,8 @@ internal class SimpleDataProcessingStrategy(IMongoDatabaseFactory mongoDatabaseF
             csvReader.Context.RegisterClassMap<SimpleDataMapper>();
             var records = csvReader.GetRecords<SimpleDataRawRecord>();
 
-            var mongoDbBatchInsert = new MongoDbBatchInsert<SimpleDataRawRecord>(mongoDatabaseFactory, batchSettings, logger);
+            var mongoDbBatchInsert = new MongoDbBatchInsert<SimpleDataRawRecord>(mongoDatabaseFactory, tweakSettings, logger);
             await mongoDbBatchInsert.ProcessRecords(records, "SimplesDataRaw", cancellationToken);
-
-            //await ProcessSimpleData(records, cancellationToken);
 
             return Result.Success();
         }
@@ -34,29 +32,4 @@ internal class SimpleDataProcessingStrategy(IMongoDatabaseFactory mongoDatabaseF
             return Result.Failure($"Error while processing records: {ex.Message}");
         }
     }
-
-    //private async Task ProcessSimpleData(IEnumerable<SimpleDataRawRecord> simplesData, CancellationToken cancellationToken)
-    //{
-    //    var collection = mongoDatabaseFactory
-    //        .Database
-    //        .GetCollection<SimpleDataRawRecord>("SimplesDataRaw");
-
-    //    var buffer = new List<SimpleDataRawRecord>(batchSettings.Size);
-
-    //    foreach (var record in simplesData)
-    //    {
-    //        buffer.Add(record);
-
-    //        if (buffer.Count >= batchSettings.Size)
-    //        {
-    //            await collection.InsertManyAsync(buffer, cancellationToken: cancellationToken);
-    //            buffer.Clear();
-    //        }
-    //    }
-
-    //    if (buffer.Count > 0)
-    //    {
-    //        await collection.InsertManyAsync(buffer, cancellationToken: cancellationToken);
-    //    }
-    //}
 }

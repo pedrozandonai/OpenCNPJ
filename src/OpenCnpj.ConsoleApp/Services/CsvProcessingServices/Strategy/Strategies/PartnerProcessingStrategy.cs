@@ -9,7 +9,7 @@ using OpenCnpj.ConsoleApp.Mappers;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies;
-public class PartnerProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactory, BatchSettings batchSettings, ILogger logger) : ICsvProcessingStrategy
+public class PartnerProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactory, TweakSettings tweakSettings, ILogger logger) : ICsvProcessingStrategy
 {
     private readonly ILogger _logger = logger.ForContext<PartnerProcessingStrategy>();
     public string FilePattern => "Socios";
@@ -21,10 +21,8 @@ public class PartnerProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactor
             csvReader.Context.RegisterClassMap<PartnerMapper>();
             var records = csvReader.GetRecords<PartnerRawRecord>();
 
-            var mongoDbBatchInsert = new MongoDbBatchInsert<PartnerRawRecord>(mongoDatabaseFactory, batchSettings, logger);
+            var mongoDbBatchInsert = new MongoDbBatchInsert<PartnerRawRecord>(mongoDatabaseFactory, tweakSettings, logger);
             await mongoDbBatchInsert.ProcessRecords(records, "PartnersRaw", cancellationToken);
-
-            //await ProcessPartners(records, cancellationToken);
 
             return Result.Success();
         }
@@ -34,30 +32,5 @@ public class PartnerProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactor
             return Result.Failure($"Error while processing records: {ex.Message}");
         }
     }
-
-    //private async Task ProcessPartners(IEnumerable<PartnerRawRecord> partners, CancellationToken cancellationToken)
-    //{
-    //    var collection = mongoDatabaseFactory
-    //        .Database
-    //        .GetCollection<PartnerRawRecord>("PartnersRaw");
-
-    //    var buffer = new List<PartnerRawRecord>(batchSettings.Size);
-
-    //    foreach (var record in partners)
-    //    {
-    //        buffer.Add(record);
-
-    //        if (buffer.Count >= batchSettings.Size)
-    //        {
-    //            await collection.InsertManyAsync(buffer, cancellationToken: cancellationToken);
-    //            buffer.Clear();
-    //        }
-    //    }
-
-    //    if (buffer.Count > 0)
-    //    {
-    //        await collection.InsertManyAsync(buffer, cancellationToken: cancellationToken);
-    //    }
-    //}
 }
 

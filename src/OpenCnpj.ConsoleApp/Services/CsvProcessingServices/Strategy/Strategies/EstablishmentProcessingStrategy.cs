@@ -9,7 +9,7 @@ using OpenCnpj.ConsoleApp.Mappers;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies;
-public class EstablishmentProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactory, BatchSettings batchSettings, ILogger logger) : ICsvProcessingStrategy
+public class EstablishmentProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactory, TweakSettings tweakSettings, ILogger logger) : ICsvProcessingStrategy
 {
     private readonly ILogger _logger = logger.ForContext<EstablishmentProcessingStrategy>();
     public string FilePattern => "Estabelecimento";
@@ -21,7 +21,7 @@ public class EstablishmentProcessingStrategy(IMongoDatabaseFactory mongoDatabase
             csvReader.Context.RegisterClassMap<EstablishmentMapper>();
             var records = csvReader.GetRecords<EstablishmentRawRecord>();
 
-            var mongoDbBatchInsert = new MongoDbBatchInsert<EstablishmentRawRecord>(mongoDatabaseFactory, batchSettings, logger);
+            var mongoDbBatchInsert = new MongoDbBatchInsert<EstablishmentRawRecord>(mongoDatabaseFactory, tweakSettings, logger);
             await mongoDbBatchInsert.ProcessRecords(records, "EstablishmentsRaw", cancellationToken);
 
             return Result.Success();

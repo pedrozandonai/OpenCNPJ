@@ -13,16 +13,16 @@ namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies
 public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T : RawRecordBase, new()
 {
     private readonly IMongoDatabaseFactory _mongoDatabaseFactory;
-    private readonly BatchSettings _batchSettings;
+    private readonly TweakSettings _tweakSettings;
     private readonly ILogger _logger;
     private readonly string _filePattern;
 
     public string FilePattern => _filePattern;
 
-    public ReferenceDataProcessingStrategy(string filePattern, IMongoDatabaseFactory mongoDatabaseFactory, BatchSettings batchSettings, ILogger logger)
+    public ReferenceDataProcessingStrategy(string filePattern, IMongoDatabaseFactory mongoDatabaseFactory, TweakSettings tweakSettings, ILogger logger)
     {
         _mongoDatabaseFactory = mongoDatabaseFactory;
-        _batchSettings = batchSettings;
+        _tweakSettings = tweakSettings;
         _filePattern = filePattern;
         _logger = logger.ForContext<ReferenceDataProcessingStrategy<T>>();
     }
@@ -34,10 +34,8 @@ public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T
             csvReader.Context.RegisterClassMap<RecordBaseMapper>();
             var records = csvReader.GetRecords<T>();
 
-            var mongoDbBatchInsert = new MongoDbBatchInsert<T>(_mongoDatabaseFactory, _batchSettings, _logger);
+            var mongoDbBatchInsert = new MongoDbBatchInsert<T>(_mongoDatabaseFactory, _tweakSettings, _logger);
             await mongoDbBatchInsert.ProcessRecords(records, typeof(T).Name, cancellationToken);
-
-            //await ProcessReferenceData(records, cancellationToken);
 
             return Result.Success();
         }
@@ -47,29 +45,4 @@ public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T
             return Result.Failure($"Error while processing records: {ex.Message}");
         }
     }
-
-    //private async Task ProcessReferenceData(IEnumerable<T> data, CancellationToken cancellationToken)
-    //{
-    //    var collection = _mongoDatabaseFactory
-    //        .Database
-    //        .GetCollection<T>(typeof(T).Name);
-
-    //    var buffer = new List<T>(_batchSettings.Size);
-
-    //    foreach (var record in data)
-    //    {
-    //        buffer.Add(record);
-
-    //        if (buffer.Count >= _batchSettings.Size)
-    //        {
-    //            await collection.InsertManyAsync(buffer, cancellationToken: cancellationToken);
-    //            buffer.Clear();
-    //        }
-    //    }
-
-    //    if (buffer.Count > 0)
-    //    {
-    //        await collection.InsertManyAsync(buffer, cancellationToken: cancellationToken);
-    //    }
-    //}
 }

@@ -17,11 +17,11 @@ public static class ConfigurationsInjection
 
         services.AddSingleton(govSetttings);
 
-        BatchSettings batchSettings = new();
+        TweakSettings tweakSettings = new();
 
-        configuration.GetRequiredSection(nameof(BatchSettings)).Bind(batchSettings);
+        configuration.GetRequiredSection(nameof(TweakSettings)).Bind(tweakSettings);
 
-        services.AddSingleton(batchSettings);
+        services.AddSingleton(tweakSettings);
 
         DatabaseSettings databaseSettings = new();
 
