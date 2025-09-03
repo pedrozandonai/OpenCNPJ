@@ -108,8 +108,6 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             foreach (var establishmentRawRecord in companyWithEstablishments.Establishments)
                 companiesToInsert.Add(await ProcessEstablishments(companyWithEstablishments, establishmentRawRecord, services, cancellationToken));
 
-            await dbFactory.BeginAsync();
-
             if (companiesToInsert.Count != 0)
                 await services.CompanyRepository.Insert(companiesToInsert!, cancellationToken);
 
