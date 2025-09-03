@@ -5,5 +5,6 @@ namespace OpenCnpj.ConsoleApp.Application.SpecialSituations.Repositories;
 
 public interface ISpecialSituationRepository : IOpenCnpjDatabaseFactory
 {
-    Task<long> Insert(SpecialSituation specialSituation, CancellationToken cancellationToken);
+    Task<int> Insert(SpecialSituation specialSituation, CancellationToken cancellationToken);
+    Task<SpecialSituation?> GetByDescription(string description, CancellationToken cancellationToken);
 }

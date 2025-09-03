@@ -1,13 +1,16 @@
-﻿using OpenCnpj.ConsoleApp.Application.BaseRecords.Abstractions;
+﻿namespace OpenCnpj.ConsoleApp.Application.Countries.Domain;
 
-namespace OpenCnpj.ConsoleApp.Application.Countries.Domain;
-public class Country : BaseRecord
+public class Country
 {
+    public long ID { get; protected set; }
     public string Code { get; init; }
+    public string Description { get; private set; }
 
-    private Country(int id, string code, string description) : base(id, description)
+    public Country(long iD, string code, string description)
     {
+        ID = iD;
         Code = code;
+        Description = description;
     }
 
     public static Country Create(string code, string description)

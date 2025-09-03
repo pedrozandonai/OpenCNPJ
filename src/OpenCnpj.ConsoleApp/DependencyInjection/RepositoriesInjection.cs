@@ -5,6 +5,7 @@ using OpenCnpj.ConsoleApp.Application.Batches.Batches.Repositories;
 using OpenCnpj.ConsoleApp.Application.Batches.BatchFiles.Repositories;
 using OpenCnpj.ConsoleApp.Application.Cities.Repositories;
 using OpenCnpj.ConsoleApp.Application.Companies.Repositories;
+using OpenCnpj.ConsoleApp.Application.CompanySpecialSituations.Repositories;
 using OpenCnpj.ConsoleApp.Application.Countries.Repositories;
 using OpenCnpj.ConsoleApp.Application.EconomicActivities.Repositories;
 using OpenCnpj.ConsoleApp.Application.LegalNatures.Repositories;
@@ -30,6 +31,7 @@ public static class RepositoriesInjection
         services.AddTransient<IAddressRepository, AddressRepository>();
         services.AddTransient<ISpecialSituationRepository, SpecialSituationRepository>();
         services.AddTransient<IEconomicActivityRepository, EconomicActivityRepository>();
+        services.AddTransient<ICompanySpecialSituationRepository, CompanySpecialSituationRepository>();
 
         return services;
     }

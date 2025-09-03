@@ -4,8 +4,8 @@ namespace OpenCnpj.ConsoleApp.Application.Addresses.Domain;
 public class Address
 {
     public long ID { get; private set; }
-    public int AddressTypeID { get; private set; }
-    public int CityID { get; private set; }
+    public long AddressTypeID { get; private set; }
+    public long CityID { get; private set; }
     public string Street { get; private set; }
     public int? Number { get; private set; }
     public string? Complement { get; private set; }
@@ -13,7 +13,7 @@ public class Address
     public int? ZipCode { get; private set; }
     public string FederalUnit { get; private set; }
 
-    private Address(long iD, int addressTypeID, int cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
+    private Address(long iD, long addressTypeID, long cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
     {
         ID = iD;
         AddressTypeID = addressTypeID;
@@ -26,7 +26,7 @@ public class Address
         FederalUnit = federalUnit;
     }
 
-    public static Address Create(int addressTypeID, int cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
+    public static Address Create(long addressTypeID, long cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
         => new(0, addressTypeID, cityID, street, number, complement, neightborhood, zipCode, federalUnit);
 
     public Result SetID(long id)

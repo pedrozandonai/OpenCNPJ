@@ -1,85 +1,82 @@
-﻿using CSharpFunctionalExtensions;
-using Npgsql;
+﻿using Npgsql;
 using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
 using System.Data;
 
-namespace OpenCnpj.ConsoleApp.Core.Database.Factory;
-
-public class DatabaseFactory : IDatabaseFactory
+public class DatabaseFactory : IDatabaseFactory, IDisposable
 {
-    private string _connectionString { get; set; }
-    private NpgsqlConnection _connection { get; set; }
-    private NpgsqlTransaction? _transaction { get; set; }
-    public bool TransactionIsOpen { get; set; }
+    private readonly string _connectionString;
+    private NpgsqlConnection? _connection;
+    private NpgsqlTransaction? _transaction;
 
     public DatabaseFactory(string connectionString)
     {
-        _connection = new NpgsqlConnection(connectionString);
         _connectionString = connectionString;
-        TransactionIsOpen = false;
-        _connection.Open();
     }
 
+    public bool TransactionIsOpen => _transaction != null;
     public string ConnectionString => _connectionString;
-    public IDbConnection Connection => _connection;
+    public IDbConnection Connection => _connection ?? throw new InvalidOperationException("Connection not opened");
     public IDbTransaction? Transaction => _transaction;
+
+    private async Task EnsureConnectionOpenAsync()
+    {
+        if (_connection == null)
+        {
+            _connection = new NpgsqlConnection(_connectionString);
+            await _connection.OpenAsync();
+        }
+        else if (_connection.State != ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
+    }
 
     public void Begin()
     {
-        _transaction = _connection.BeginTransaction();
-        TransactionIsOpen = true;
+        EnsureConnectionOpenAsync().GetAwaiter().GetResult();
+        _transaction = _connection!.BeginTransaction();
     }
 
     public async Task BeginAsync()
     {
-        _transaction = await _connection.BeginTransactionAsync();
-        TransactionIsOpen = true;
+        await EnsureConnectionOpenAsync();
+        _transaction = await _connection!.BeginTransactionAsync();
     }
 
     public void Commit()
     {
-        _transaction!.Commit();
-        TransactionIsOpen = false;
+        if (_transaction == null) throw new Exception("No transaction opened.");
+        _transaction.Commit();
+        _transaction = null;
     }
 
     public async Task CommitAsync()
     {
-        if (_transaction == null)
-            throw new Exception("No transaction opened.");
-
-        await _transaction!.CommitAsync();
-        TransactionIsOpen = false;
+        if (_transaction == null) throw new Exception("No transaction opened.");
+        await _transaction.CommitAsync();
+        _transaction = null;
     }
 
     public void Rollback()
     {
-        _transaction!.Rollback();
-        TransactionIsOpen = false;
+        if (_transaction == null) throw new Exception("No transaction opened.");
+        _transaction.Rollback();
+        _transaction = null;
     }
 
     public async Task RollbackAsync()
     {
-        await _transaction!.RollbackAsync();
-        TransactionIsOpen = false;
+        if (_transaction == null) throw new Exception("No transaction opened.");
+        await _transaction.RollbackAsync();
+        _transaction = null;
     }
 
     public void Dispose()
     {
-        if (TransactionIsOpen)
-            _transaction?.Rollback();
-
+        try { _transaction?.Rollback(); } catch { }
         _transaction?.Dispose();
-        _connection?.Close();
+        try { _connection?.Close(); } catch { }
         _connection?.Dispose();
-
         GC.SuppressFinalize(this);
-    }
-
-    public Result VerifyDatabaseTransaction()
-    {
-        if (TransactionIsOpen)
-            return Result.Success();
-
-        return Result.Failure("Not in transaction.");
     }
 }

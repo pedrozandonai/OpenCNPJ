@@ -16,12 +16,12 @@ public class EstablishmentRawRecord
     public string RegistrationStatusReason { get; set; }
     public string ForeignCityName { get; set; }
     public string CountryCode { get; set; }
-    public DateOnly? StartActivityDate { get; set; }
+    public DateTime? StartActivityDate { get; set; }
     public string MainCnae { get; set; }
     public string SecondaryCnaes { get; set; }
     public AddressRawRecord Address { get; set; }
     public ContactRawRecord Contact { get; set; }
     public string SpecialStatus { get; set; }
-    public DateOnly? SpecialStatusDate { get; set; }
+    public DateTime? SpecialStatusDate { get; set; }
 }
 

@@ -25,10 +25,22 @@ public class EconomicActivityRepository(IDatabaseFactory databaseFactory) : IEco
                                     code AS Code,
                                     description AS Description
                                FROM economic_activities
-                             WHERE code = @code";
+                              WHERE code = @code";
 
         var command = new CommandDefinition(sql, new { code }, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
 
         return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<EconomicActivity>(command);
+    }
+
+    public async Task<IEnumerable<EconomicActivity>> GetAll(CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    code AS Code,
+                                    description AS Description
+                               FROM economic_activities";
+
+        var command = new CommandDefinition(sql, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
+
+        return await DatabaseFactory.Connection.QueryAsync<EconomicActivity>(command);
     }
 }

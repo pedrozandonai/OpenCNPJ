@@ -18,16 +18,28 @@ public class PartnerQualificationRepository(IDatabaseFactory databaseFactory) : 
         await DatabaseFactory.Connection.ExecuteAsync(command);
     }
 
-    public async Task<PartnerQualification?> GetByCode(string code, CancellationToken cancellationToken)
+    public async Task<PartnerQualification?> GetByCode(long code, CancellationToken cancellationToken)
     {
         const string sql = @"SELECT id AS ID,
                                     code AS Code,
                                     description AS Description
                                FROM partner_qualifications
-                             WHERE code = @code";
+                              WHERE code = @code";
 
         var command = new CommandDefinition(sql, new { code }, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
 
         return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<PartnerQualification>(command);
+    }
+
+    public async Task<IEnumerable<PartnerQualification>> GetAll(CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    code AS Code,
+                                    description AS Description
+                               FROM partner_qualifications";
+
+        var command = new CommandDefinition(sql, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
+
+        return await DatabaseFactory.Connection.QueryAsync<PartnerQualification>(command);
     }
 }

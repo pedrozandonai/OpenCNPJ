@@ -17,7 +17,7 @@ public class ReasonService(IMongoDatabaseFactory mongoDatabaseFactory, IReasonRe
         {
             await reasonRepository.DatabaseFactory.BeginAsync();
 
-            await foreach (var reasonRawRecordRecord in GetAllPartnerQualificationRawRecords(cancellationToken))
+            await foreach (var reasonRawRecordRecord in GetAllReasonsRawRecords(cancellationToken))
                 await reasonRepository.Insert(Reason.Create(reasonRawRecordRecord.Code, reasonRawRecordRecord.Description), cancellationToken);
 
             await reasonRepository.DatabaseFactory.CommitAsync();
@@ -32,7 +32,7 @@ public class ReasonService(IMongoDatabaseFactory mongoDatabaseFactory, IReasonRe
         return Result.Success();
     }
 
-    private async IAsyncEnumerable<ReasonRawRecord> GetAllPartnerQualificationRawRecords([EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<ReasonRawRecord> GetAllReasonsRawRecords([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var citiesRawRecords = mongoDatabaseFactory.Database.GetCollection<ReasonRawRecord>("ReasonRawRecord");
 

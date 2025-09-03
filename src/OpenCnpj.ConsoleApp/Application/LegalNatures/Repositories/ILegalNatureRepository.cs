@@ -6,4 +6,5 @@ public interface ILegalNatureRepository : IOpenCnpjDatabaseFactory
 {
     Task Insert(LegalNature legalNature, CancellationToken cancellationToken);
     Task<LegalNature?> GetByCode(string code, CancellationToken cancellationToken);
+    Task<IEnumerable<LegalNature>> GetAll(CancellationToken cancellationToken);
 }

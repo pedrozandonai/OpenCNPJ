@@ -1,21 +1,17 @@
-﻿using OpenCnpj.ConsoleApp.Application.BaseRecords.Abstractions;
-
-namespace OpenCnpj.ConsoleApp.Application.Cities.Domain;
-public class City : BaseRecord
+﻿namespace OpenCnpj.ConsoleApp.Application.Cities.Domain;
+public class City
 {
-    public string Code { get; init; }
+    public long ID { get; protected set; }
+    public long Code { get; init; }
+    public string Description { get; private set; }
 
-    private City(int id, string code, string description)
-        : base(id, description)
+    public City(long iD, long code, string description)
     {
+        ID = iD;
         Code = code;
+        Description = description;
     }
 
-    private City()
-        : base()
-    {
-    }
-
-    public static City Create(string code, string description)
+    public static City Create(long code, string description)
         => new (0, code, description);
 }

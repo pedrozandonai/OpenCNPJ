@@ -19,7 +19,7 @@ public class CityRepository(IDatabaseFactory databaseFactory) : ICityRepository
         await DatabaseFactory.Connection.ExecuteAsync(command);
     }
 
-    public async Task<City?> GetByCode(string code, CancellationToken cancellationToken)
+    public async Task<City?> GetByCode(long code, CancellationToken cancellationToken)
     {
         const string sql = @"SELECT id AS ID,
                                     code AS Code,

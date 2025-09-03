@@ -14,5 +14,4 @@ public interface IDatabaseFactory : IDisposable
     Task CommitAsync();
     void Rollback();
     Task RollbackAsync();
-    Result VerifyDatabaseTransaction();
 }

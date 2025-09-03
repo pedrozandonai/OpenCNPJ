@@ -5,5 +5,6 @@ namespace OpenCnpj.ConsoleApp.Application.PartnersQualifications.Repositories;
 public interface IPartnerQualificationRepository : IOpenCnpjDatabaseFactory
 {
     Task Insert(PartnerQualification partnerQualification, CancellationToken cancellationToken);
-    Task<PartnerQualification?> GetByCode(string code, CancellationToken cancellationToken);
+    Task<PartnerQualification?> GetByCode(long code, CancellationToken cancellationToken);
+    Task<IEnumerable<PartnerQualification>> GetAll(CancellationToken cancellationToken);
 }

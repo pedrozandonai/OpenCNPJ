@@ -11,8 +11,8 @@ public class AddressService(IAddressTypeService addressTypeService, ICityReposit
 {
     public async Task<Result<Address>> CreateAddressByEstablishmentRawRecord(EstablishmentRawRecord establishmentRawRecord, CancellationToken cancellationToken)
     {
-        if (!addressRepository.DatabaseFactory.TransactionIsOpen)
-            return Result.Failure<Address>(ApplicationErrors.NotInTransaction);
+        //if (!addressRepository.DatabaseFactory.TransactionIsOpen)
+        //    return Result.Failure<Address>(ApplicationErrors.NotInTransaction);
 
         var establishmentAddress = establishmentRawRecord.Address;
 
@@ -20,7 +20,10 @@ public class AddressService(IAddressTypeService addressTypeService, ICityReposit
         if (addressType.IsFailure)
             return Result.Failure<Address>(addressType.Error);
 
-        var city = await cityRepository.GetByCode(establishmentAddress.MunicipalityCode, cancellationToken);
+        if (!long.TryParse(establishmentAddress.MunicipalityCode, out var cityCode))
+            return Result.Failure<Address>("Unable to parse MunicipalityCode");
+
+        var city = await cityRepository.GetByCode(cityCode, cancellationToken);
         if (city == null)
             return Result.Failure<Address>("The city of the establishment could not be retreived.");
 

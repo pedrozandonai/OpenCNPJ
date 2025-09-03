@@ -1,13 +1,16 @@
-﻿using OpenCnpj.ConsoleApp.Application.BaseRecords.Abstractions;
+﻿namespace OpenCnpj.ConsoleApp.Application.EconomicActivities.Domain;
 
-namespace OpenCnpj.ConsoleApp.Application.EconomicActivities.Domain;
-public class EconomicActivity : BaseRecord
+public class EconomicActivity
 {
+    public long ID { get; init; }
     public string Code { get; init; }
+    public string Description { get; private set; }
 
-    private EconomicActivity(int id, string code, string description) : base(id, description)
+    public EconomicActivity(long id, string code, string description)
     {
+        ID = id;
         Code = code;
+        Description = description;
     }
 
     public static EconomicActivity Create(string code, string description)

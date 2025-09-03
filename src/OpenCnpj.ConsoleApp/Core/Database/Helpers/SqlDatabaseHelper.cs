@@ -14,11 +14,15 @@ public static class SqlDatabaseHelper
         {
             var databaseFactory = serviceProvider.GetRequiredService<IDatabaseFactory>();
 
+            await databaseFactory.BeginAsync();
+
             const string sql = @"drop schema if exists public cascade; create schema public";
 
             var command = new CommandDefinition(sql, transaction: databaseFactory.Transaction, cancellationToken: cancellationToken);
 
             await databaseFactory.Connection.ExecuteAsync(command);
+
+            await databaseFactory.CommitAsync();
         }
         catch(Exception ex)
         {

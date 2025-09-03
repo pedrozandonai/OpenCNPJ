@@ -69,12 +69,12 @@ public class InitialMigration : Migration
 
         Create.Table("cities")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("code").AsString().Unique()
+            .WithColumn("code").AsInt64().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("partner_qualifications")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("code").AsString().Unique()
+            .WithColumn("code").AsInt64().Unique()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("legal_natures")
@@ -97,9 +97,13 @@ public class InitialMigration : Migration
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("special_situations")
-            .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("description").AsString().NotNullable()
-            .WithColumn("situation_date").AsDate().NotNullable();
+            .WithColumn("id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("description").AsString().NotNullable();
+
+        Create.Table("company_special_situations")
+            .WithColumn("id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("special_situation_id").AsInt32().NotNullable()
+            .WithColumn("start_date").AsDate().NotNullable();
 
         Create.Table("address_types")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
@@ -131,19 +135,19 @@ public class InitialMigration : Migration
         Create.Table("company")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
             .WithColumn("legal_nature_id").AsInt64().NotNullable()
-            .WithColumn("main_partner_qualification_id").AsInt64().NotNullable()
+            .WithColumn("main_partner_qualification_id").AsInt64().Nullable()
             .WithColumn("company_size_id").AsInt32().NotNullable()
             .WithColumn("company_type_id").AsInt32().NotNullable()
-            .WithColumn("country_id").AsInt64().NotNullable()
+            .WithColumn("country_id").AsInt64().Nullable()
             .WithColumn("address_id").AsInt64().NotNullable()
+            .WithColumn("company_special_situation_id").AsInt32().Nullable()
             .WithColumn("main_economic_activity_id").AsInt64().NotNullable()
-            .WithColumn("special_situation_id").AsInt64().NotNullable()
             .WithColumn("identifier").AsString().NotNullable()
             .WithColumn("name").AsString().NotNullable()
-            .WithColumn("fantasy_name").AsString().NotNullable()
             .WithColumn("share_capital").AsDecimal().Nullable()
             .WithColumn("responsabile_federative_entity").AsString().Nullable()
-            .WithColumn("register_date").AsDate().NotNullable()
+            .WithColumn("fantasy_name").AsString().Nullable()
+            .WithColumn("register_date").AsDate().Nullable()
             .WithColumn("foreign_city_name").AsString().Nullable()
             .WithColumn("start_date").AsDate().NotNullable();
 
@@ -234,8 +238,8 @@ public class InitialMigration : Migration
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_special_situations")
-            .FromTable("company").ForeignColumn("special_situation_id")
-            .ToTable("special_situations").PrimaryColumn("id")
+            .FromTable("company").ForeignColumn("company_special_situation_id")
+            .ToTable("company_special_situations").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_simples_company")
@@ -271,6 +275,11 @@ public class InitialMigration : Migration
         Create.ForeignKey("FK_partners_parter_types")
             .FromTable("partners").ForeignColumn("partner_type_id")
             .ToTable("parter_types").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_company_special_situations_special_situations")
+            .FromTable("company_special_situations").ForeignColumn("special_situation_id")
+            .ToTable("special_situations").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.PrimaryKey("PK_company_contacts")

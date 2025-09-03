@@ -25,11 +25,23 @@ public class LegalNatureRepository(IDatabaseFactory databaseFactory) : ILegalNat
         const string sql = @"SELECT id AS ID,
                                     code AS Code,
                                     description AS Description
-                               FROM cities
+                               FROM legal_natures
                               WHERE code = @code";
 
         var command = new CommandDefinition(sql, new { code }, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 
         return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<LegalNature>(command);
+    }
+
+    public async Task<IEnumerable<LegalNature>> GetAll(CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    code AS Code,
+                                    description AS Description
+                               FROM legal_natures";
+
+        var command = new CommandDefinition(sql, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
+
+        return await DatabaseFactory.Connection.QueryAsync<LegalNature>(command);
     }
 }

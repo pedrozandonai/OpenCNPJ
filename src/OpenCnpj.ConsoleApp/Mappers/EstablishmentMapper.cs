@@ -26,7 +26,7 @@ public class EstablishmentMapper : ClassMap<EstablishmentRawRecord>
         Map(e => e.StartActivityDate).Index(10).Convert(c =>
         {
             var val = c.Row.GetField(10);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
         });
@@ -58,7 +58,7 @@ public class EstablishmentMapper : ClassMap<EstablishmentRawRecord>
         Map(e => e.SpecialStatusDate).Index(29).Convert(c =>
         {
             var val = c.Row.GetField(29);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
         });

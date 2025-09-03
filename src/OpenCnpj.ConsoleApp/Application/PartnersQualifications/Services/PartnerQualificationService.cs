@@ -18,7 +18,16 @@ public class PartnerQualificationService(IMongoDatabaseFactory mongoDatabaseFact
             await partnerQualificationRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var partnerQualificationRawRecordRecord in GetAllPartnerQualificationRawRecords(cancellationToken))
-                await partnerQualificationRepository.Insert(PartnerQualification.Create(partnerQualificationRawRecordRecord.Code, partnerQualificationRawRecordRecord.Description), cancellationToken);
+            {
+                if (!long.TryParse(partnerQualificationRawRecordRecord.Code, out var code))
+                {
+                    _logger
+                        .ForContext("Code", partnerQualificationRawRecordRecord.Code, false)
+                        .Warning("Unable to cast partner qualification code string to long.");
+                    continue;
+                }
+                await partnerQualificationRepository.Insert(PartnerQualification.Create(code, partnerQualificationRawRecordRecord.Description), cancellationToken);
+            }
 
             await partnerQualificationRepository.DatabaseFactory.CommitAsync();
         }

@@ -31,4 +31,16 @@ public class CountryRepository(IDatabaseFactory databaseFactory) : ICountryRepos
 
         return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<Country>(command);
     }
+
+    public async Task<IEnumerable<Country>> GetAll(CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    code AS Code,
+                                    description AS Description
+                               FROM countries";
+
+        var command = new CommandDefinition(sql, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
+
+        return await DatabaseFactory.Connection.QueryAsync<Country>(command);
+    }
 }

@@ -9,9 +9,6 @@ public class AddressTypeService(IAddressTypeRepository addressTypeRepository) : 
 {
     public async Task<Result<AddressType>> GetOrCreateAddressTypeByStreetType(string streetType, CancellationToken cancellationToken)
     {
-        if (!addressTypeRepository.DatabaseFactory.TransactionIsOpen)
-            return Result.Failure<AddressType>(ApplicationErrors.NotInTransaction);
-
         var addressType = await addressTypeRepository.GetByDescription(streetType, cancellationToken);
 
         if (addressType == null)

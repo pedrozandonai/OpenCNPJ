@@ -3,19 +3,17 @@
 namespace OpenCnpj.ConsoleApp.Application.SpecialSituations.Domain;
 public class SpecialSituation
 {
-    public long ID { get; private set; }
+    public int ID { get; private set; }
     public string Description { get; private set; }
-    public DateOnly SituationDate { get; private set; }
 
-    public SpecialSituation(long id, string description, DateOnly situationDate)
+    public SpecialSituation(int id, string description)
     {
         ID = id;
         Description = description;
-        SituationDate = situationDate;
     }
 
-    public static SpecialSituation Create(string description, DateOnly situationDate)
-        => new SpecialSituation(0, description, situationDate);
+    public static SpecialSituation Create(string description)
+        => new (0, description);
 
     public Result SetID(int id)
     {

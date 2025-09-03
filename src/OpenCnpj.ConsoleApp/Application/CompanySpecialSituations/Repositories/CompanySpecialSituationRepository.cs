@@ -1,0 +1,22 @@
+﻿using Dapper;
+using OpenCnpj.ConsoleApp.Application.CompanySpecialSituations.Domain;
+using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
+
+namespace OpenCnpj.ConsoleApp.Application.CompanySpecialSituations.Repositories;
+public class CompanySpecialSituationRepository(IDatabaseFactory databaseFactory) : ICompanySpecialSituationRepository
+{
+    public IDatabaseFactory DatabaseFactory => databaseFactory;
+
+    public async Task<int> Insert(CompanySpecialSituation companySpecialSituation, CancellationToken cancellationToken)
+    {
+        const string sql = @"INSERT INTO company_special_situations (special_situation_id,
+                                                                     start_date)
+                                                             VALUES (@SpecialSituationID,
+                                                                     @StartDate)
+                                                          RETURNING id";
+
+        var command = new CommandDefinition(sql, companySpecialSituation, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
+
+        return await DatabaseFactory.Connection.ExecuteScalarAsync<int>(command);
+    }
+}

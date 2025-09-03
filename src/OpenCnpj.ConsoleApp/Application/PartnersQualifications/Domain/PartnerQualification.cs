@@ -1,16 +1,18 @@
-﻿using OpenCnpj.ConsoleApp.Application.BaseRecords.Abstractions;
+﻿namespace OpenCnpj.ConsoleApp.Application.PartnersQualifications.Domain;
 
-namespace OpenCnpj.ConsoleApp.Application.PartnersQualifications.Domain;
-public class PartnerQualification : BaseRecord
+public class PartnerQualification
 {
-    public string Code { get; init; }
+    public long ID { get; init; }
+    public long Code { get; init; }
+    public string Description { get; private set; }
 
-    private PartnerQualification(int id, string code, string description)
-        : base(id, description)
+    private PartnerQualification(long id, long code, string description)
     {
+        ID = id;
         Code = code;
+        Description = description;
     }
 
-    public static PartnerQualification Create(string code, string description)
+    public static PartnerQualification Create(long code, string description)
         => new(0, code, description);
 }

@@ -9,7 +9,16 @@ public static class MongoIndexes
     {
         var db = mongoDatabaseFactory.Database;
 
+        var cities = db.GetCollection<BsonDocument>("CityRawRecord");
+        var economicActivities = db.GetCollection<BsonDocument>("CnaeRawRecord");
+        var companies = db.GetCollection<BsonDocument>("CompaniesRaw");
+        var countries = db.GetCollection<BsonDocument>("CountryRawRecord");
         var establishments = db.GetCollection<BsonDocument>("EstablishmentsRaw");
+        var legalNatures = db.GetCollection<BsonDocument>("LegalNatureRawRecord");
+        var partnerQualifications = db.GetCollection<BsonDocument>("PartnerQualificationRawRecord");
+        var partners = db.GetCollection<BsonDocument>("PartnersRaw");
+        var reasons = db.GetCollection<BsonDocument>("ReasonRawRecord");
+        var simples = db.GetCollection<BsonDocument>("SimplesRawRecord");
 
         var indexKeys = Builders<BsonDocument>.IndexKeys.Ascending("BasicCnpj");
 
@@ -19,5 +28,8 @@ public static class MongoIndexes
         );
 
         await establishments.Indexes.CreateOneAsync(indexModel);
+        await companies.Indexes.CreateOneAsync(indexModel);
+        await partners.Indexes.CreateOneAsync(indexModel);
+        await simples.Indexes.CreateOneAsync(indexModel);
     }
 }

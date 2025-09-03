@@ -18,7 +18,17 @@ public class CityService(IMongoDatabaseFactory mongoDatabaseFactory, ICityReposi
             await cityRepository.DatabaseFactory.BeginAsync();
 
             await foreach (var cityRawRecord in GetAllCitiesRawRecords(cancellationToken))
-                await cityRepository.Insert(City.Create(cityRawRecord.Code, cityRawRecord.Description), cancellationToken);
+            {
+                if (!long.TryParse(cityRawRecord.Code, out var code))
+                {
+                    _logger
+                        .ForContext("Code", cityRawRecord.Code, false)
+                        .Warning("Unable to cast city code string to long.");
+                    continue;
+                }
+
+                await cityRepository.Insert(City.Create(code, cityRawRecord.Description), cancellationToken);
+            }
 
             await cityRepository.DatabaseFactory.CommitAsync();
         }
@@ -37,6 +47,7 @@ public class CityService(IMongoDatabaseFactory mongoDatabaseFactory, ICityReposi
         var citiesRawRecords = mongoDatabaseFactory.Database.GetCollection<CityRawRecord>("CityRawRecord");
 
         using var cursor = await citiesRawRecords.FindAsync(FilterDefinition<CityRawRecord>.Empty, cancellationToken: cancellationToken);
+
         while (await cursor.MoveNextAsync(cancellationToken))
         {
             foreach (var record in cursor.Current)

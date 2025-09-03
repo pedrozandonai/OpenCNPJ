@@ -8,16 +8,26 @@ public class SpecialSituationRepository(IDatabaseFactory databaseFactory) : ISpe
 {
     public IDatabaseFactory DatabaseFactory => databaseFactory;
 
-    public async Task<long> Insert(SpecialSituation specialSituation, CancellationToken cancellationToken)
+    public async Task<int> Insert(SpecialSituation specialSituation, CancellationToken cancellationToken)
     {
-        const string sql = @"INSERT INTO special_situations (description,
-                                                             situation_date)
-                                                     VALUES (@Description,
-                                                             @SituationDate)
+        const string sql = @"INSERT INTO special_situations (description)
+                                                     VALUES (@Description)
                                                   RETURNING ID";
 
         var command = new CommandDefinition(sql, specialSituation, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 
-        return await DatabaseFactory.Connection.ExecuteScalarAsync<long>(command);
+        return await DatabaseFactory.Connection.ExecuteScalarAsync<int>(command);
+    }
+
+    public async Task<SpecialSituation?> GetByDescription(string description, CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    description AS Description
+                               FROM special_situations
+                              WHERE description = @description";
+
+        var command = new CommandDefinition(sql, new { description }, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
+
+        return await DatabaseFactory.Connection.ExecuteScalarAsync<SpecialSituation>(command);
     }
 }

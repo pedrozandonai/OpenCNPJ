@@ -8,7 +8,7 @@ public class CompanyRawRecord
 {
     public string BasicCnpj { get; set; } = string.Empty;
     public string CorporateName { get; set; } = string.Empty;
-    public string LegalNatureCode { get; set; } = string.Empty;
+    public int LegalNatureCode { get; set; }
     public int ResponsibleQualification { get; set; }
     public decimal ShareCapital { get; set; }
     public ECompanySize? CompanySize { get; set; }

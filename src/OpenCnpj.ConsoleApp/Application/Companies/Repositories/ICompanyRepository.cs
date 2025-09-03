@@ -4,5 +4,5 @@ using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
 namespace OpenCnpj.ConsoleApp.Application.Companies.Repositories;
 public interface ICompanyRepository : IOpenCnpjDatabaseFactory
 {
-    Task Insert(Company company, CancellationToken cancellationToken);
+    Task Insert(IEnumerable<Company> companies, CancellationToken cancellationToken);
 }
