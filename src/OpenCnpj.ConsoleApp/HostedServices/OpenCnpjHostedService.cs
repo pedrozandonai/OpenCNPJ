@@ -57,33 +57,33 @@ public class OpenCnpjHostedService(IBatchService batchService, IBatchRepository 
             Result updateLastStepResult;
             
              //1. Download dos arquivos
-             if (batch.ApplicationLastStepID == EApplicationStep.StartedApplication)
-             {
-                 var downloadResult = await governmentHttpClient.DownloadCurrentBatch(batch, cancellationToken);
-                 if (downloadResult.IsFailure)
-                     return downloadResult;
-            
-                 updateLastStepResult = await batchService.SetApplicationLastStep(batch, EApplicationStep.DownloadingFiles, cancellationToken);
-                 if (updateLastStepResult.IsFailure)
-                     return updateLastStepResult;
-             }
+             // if (batch.ApplicationLastStepID == EApplicationStep.StartedApplication)
+             // {
+             //     var downloadResult = await governmentHttpClient.DownloadCurrentBatch(batch, cancellationToken);
+             //     if (downloadResult.IsFailure)
+             //         return downloadResult;
+             //
+             //     updateLastStepResult = await batchService.SetApplicationLastStep(batch, EApplicationStep.DownloadingFiles, cancellationToken);
+             //     if (updateLastStepResult.IsFailure)
+             //         return updateLastStepResult;
+             // }
 
             // 2. Extração dos arquivos
-            if (batch.ApplicationLastStepID == EApplicationStep.DownloadingFiles)
-            {
-                var extractionResult = await fileExtractionService.ExtractFiles(
-                    batch, cancellationToken);
-                if (extractionResult.IsFailure)
-                    return extractionResult;
-            
-                updateLastStepResult = await batchService.SetApplicationLastStep(batch, EApplicationStep.ExtractingFiles, cancellationToken);
-                if (updateLastStepResult.IsFailure)
-                    return updateLastStepResult;
-            }
+            // if (batch.ApplicationLastStepID == EApplicationStep.DownloadingFiles)
+            // {
+            //     var extractionResult = await fileExtractionService.ExtractFiles(
+            //         batch, cancellationToken);
+            //     if (extractionResult.IsFailure)
+            //         return extractionResult;
+            //
+            //     updateLastStepResult = await batchService.SetApplicationLastStep(batch, EApplicationStep.ExtractingFiles, cancellationToken);
+            //     if (updateLastStepResult.IsFailure)
+            //         return updateLastStepResult;
+            // }
 
             // 3. Processamento dos dados RAW
-            if (batch.ApplicationLastStepID == EApplicationStep.ExtractingFiles)
-            {
+            // if (batch.ApplicationLastStepID == EApplicationStep.ExtractingFiles)
+            // {
                 var processingResult = await csvProcessingService.ProcessCsvFiles(
                     batch, cancellationToken);
                 if (processingResult.IsFailure)
@@ -92,7 +92,7 @@ public class OpenCnpjHostedService(IBatchService batchService, IBatchRepository 
                 updateLastStepResult = await batchService.SetApplicationLastStep(batch, EApplicationStep.ProcessingRawFiles, cancellationToken);
                 if (updateLastStepResult.IsFailure)
                     return updateLastStepResult;
-            }
+            // }
 
             // 4. Formatar os dados raw do mongo para postgres
             if (batch.ApplicationLastStepID == EApplicationStep.ProcessingRawFiles)

@@ -218,11 +218,6 @@ public class InitialMigration : Migration
             .ToTable("company_types").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
-        Create.ForeignKey("FK_company_reasons")
-            .FromTable("company").ForeignColumn("reason_id")
-            .ToTable("reasons").PrimaryColumn("id")
-            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
-
         Create.ForeignKey("FK_company_countries")
             .FromTable("company").ForeignColumn("country_id")
             .ToTable("countries").PrimaryColumn("id")
