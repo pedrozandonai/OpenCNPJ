@@ -5,4 +5,5 @@ namespace OpenCnpj.ConsoleApp.Application.CompanySpecialSituations.Repositories;
 public interface ICompanySpecialSituationRepository : IOpenCnpjDatabaseFactory
 {
     Task<int> Insert(CompanySpecialSituation companySpecialSituation, CancellationToken cancellationToken);
+    Task Insert(IEnumerable<CompanySpecialSituation> companySpecialSituations, CancellationToken cancellationToken);
 }

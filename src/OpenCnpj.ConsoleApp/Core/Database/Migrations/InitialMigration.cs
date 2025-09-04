@@ -92,21 +92,17 @@ public class InitialMigration : Migration
             .WithColumn("code").AsString().Unique()
             .WithColumn("description").AsString().NotNullable();
 
-        Create.Table("adress_types")
-            .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("description").AsString().NotNullable();
-
         Create.Table("special_situations")
-            .WithColumn("id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("id").AsInt32().PrimaryKey()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("company_special_situations")
-            .WithColumn("id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("id").AsInt32().PrimaryKey()
             .WithColumn("special_situation_id").AsInt32().NotNullable()
             .WithColumn("start_date").AsDate().NotNullable();
 
         Create.Table("address_types")
-            .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("phones")
@@ -122,7 +118,7 @@ public class InitialMigration : Migration
             .WithColumn("email_address").AsString().Nullable();
             
         Create.Table("addresses")
-            .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("address_type_id").AsInt64().NotNullable()
             .WithColumn("city_id").AsInt64().NotNullable()
             .WithColumn("street").AsString().NotNullable()
@@ -133,7 +129,7 @@ public class InitialMigration : Migration
             .WithColumn("federal_unit").AsString().NotNullable();
 
         Create.Table("company")
-            .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("legal_nature_id").AsInt64().NotNullable()
             .WithColumn("main_partner_qualification_id").AsInt64().Nullable()
             .WithColumn("company_size_id").AsInt32().NotNullable()
@@ -147,9 +143,9 @@ public class InitialMigration : Migration
             .WithColumn("share_capital").AsDecimal().Nullable()
             .WithColumn("responsabile_federative_entity").AsString().Nullable()
             .WithColumn("fantasy_name").AsString().Nullable()
-            .WithColumn("register_date").AsDate().Nullable()
+            .WithColumn("register_date").AsDateTime().Nullable()
             .WithColumn("foreign_city_name").AsString().Nullable()
-            .WithColumn("start_date").AsDate().NotNullable();
+            .WithColumn("start_date").AsDateTime().NotNullable();
 
         Create.Table("mei")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()

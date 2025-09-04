@@ -12,8 +12,8 @@ public class SpecialSituation
         Description = description;
     }
 
-    public static SpecialSituation Create(string description)
-        => new (0, description);
+    public static SpecialSituation Create(int id, string description)
+        => new (id, description);
 
     public Result SetID(int id)
     {

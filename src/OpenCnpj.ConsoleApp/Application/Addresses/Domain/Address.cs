@@ -26,8 +26,8 @@ public class Address
         FederalUnit = federalUnit;
     }
 
-    public static Address Create(long addressTypeID, long cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
-        => new(0, addressTypeID, cityID, street, number, complement, neightborhood, zipCode, federalUnit);
+    public static Address Create(long id, long addressTypeID, long cityID, string street, int? number, string? complement, string neightborhood, int? zipCode, string federalUnit)
+        => new(id, addressTypeID, cityID, street, number, complement, neightborhood, zipCode, federalUnit);
 
     public Result SetID(long id)
     {

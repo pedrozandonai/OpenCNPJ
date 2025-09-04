@@ -6,4 +6,5 @@ public interface ICityRepository : IOpenCnpjDatabaseFactory
 {
     Task Insert(City city, CancellationToken cancellationToken);
     Task<City?> GetByCode(long code, CancellationToken cancellationToken);
+    Task<IEnumerable<City>> GetAll(CancellationToken cancellationToken);
 }

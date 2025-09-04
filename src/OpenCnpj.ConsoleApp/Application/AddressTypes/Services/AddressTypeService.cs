@@ -13,7 +13,7 @@ public class AddressTypeService(IAddressTypeRepository addressTypeRepository) : 
 
         if (addressType == null)
         {
-            addressType = AddressType.Create(streetType);
+            addressType = AddressType.Create(0, streetType);
 
             var addressTypeID = await addressTypeRepository.Insert(addressType, cancellationToken);
 

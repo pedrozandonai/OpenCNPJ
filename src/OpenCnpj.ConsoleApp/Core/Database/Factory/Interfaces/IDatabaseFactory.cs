@@ -1,5 +1,4 @@
-﻿using CSharpFunctionalExtensions;
-using System.Data;
+﻿using System.Data;
 
 namespace OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
 public interface IDatabaseFactory : IDisposable

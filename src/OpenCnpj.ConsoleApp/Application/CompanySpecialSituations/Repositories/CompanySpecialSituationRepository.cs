@@ -19,4 +19,18 @@ public class CompanySpecialSituationRepository(IDatabaseFactory databaseFactory)
 
         return await DatabaseFactory.Connection.ExecuteScalarAsync<int>(command);
     }
+
+    public async Task Insert(IEnumerable<CompanySpecialSituation> companySpecialSituations, CancellationToken cancellationToken)
+    {
+        const string sql = @"INSERT INTO company_special_situations (id,
+                                                                     special_situation_id,
+                                                                     start_date)
+                                                             VALUES (@ID,
+                                                                     @SpecialSituationID,
+                                                                     @StartDate)";
+
+        var command = new CommandDefinition(sql, companySpecialSituations, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
+
+        await DatabaseFactory.Connection.ExecuteAsync(command);
+    }
 }

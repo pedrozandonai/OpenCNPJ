@@ -1,5 +1,4 @@
-﻿
-namespace OpenCnpj.ConsoleApp.Application.Batches.Batches.Queries;
+﻿namespace OpenCnpj.ConsoleApp.Application.Batches.Batches.Queries;
 
 public interface IBatchQueries
 {

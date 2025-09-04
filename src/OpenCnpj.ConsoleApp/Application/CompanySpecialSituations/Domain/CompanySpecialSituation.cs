@@ -15,8 +15,8 @@ public class CompanySpecialSituation
         StartDate = startDate;
     }
 
-    public static CompanySpecialSituation Create(int specialSituationID, DateTime startDate)
-    => new(0, specialSituationID, startDate);
+    public static CompanySpecialSituation Create(int id, int specialSituationID, DateTime startDate)
+    => new(id, specialSituationID, startDate);
 
     public Result SetID(int id)
     {

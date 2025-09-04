@@ -31,4 +31,16 @@ public class CityRepository(IDatabaseFactory databaseFactory) : ICityRepository
 
         return await DatabaseFactory.Connection.QueryFirstOrDefaultAsync<City>(command);
     }
+
+    public async Task<IEnumerable<City>> GetAll(CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    code AS Code,
+                                    description AS Description
+                               FROM cities";
+
+        var command = new CommandDefinition(sql, transaction: DatabaseFactory.Transaction, cancellationToken:cancellationToken);
+
+        return await DatabaseFactory.Connection.QueryAsync<City>(command);
+    }
 }

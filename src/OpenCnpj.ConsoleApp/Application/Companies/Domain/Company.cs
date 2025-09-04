@@ -35,11 +35,11 @@ public class Company
         ShareCapital=shareCapital;
         ResponsableFederativeEntity=responsableFederativeEntity;
         FantasyName=fantasyName;
-        RegisterDate=registerDate;
+        RegisterDate= registerDate.HasValue ? registerDate.Value.ToLocalTime() : null;
         ForeingCityName=foreingCityName;
-        StartDate=startDate;
+        StartDate = startDate.ToLocalTime();
     }
 
-    public static Company Create(long legalNatureID, long? mainPartnerQualificationID, int companySizeID, int companyTypeID, long? countryID, long addressID, long? companySpecialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
-        => new(0, legalNatureID, mainPartnerQualificationID, companySizeID, companyTypeID, countryID, addressID, companySpecialSituationID, mainEconomicActivityID, identifier, name, shareCapital, responsableFederativeEntity, fantasyName, registerDate, foreingCityName, startDate);
+    public static Company Create(long id, long legalNatureID, long? mainPartnerQualificationID, int companySizeID, int companyTypeID, long? countryID, long addressID, long? companySpecialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
+        => new(id, legalNatureID, mainPartnerQualificationID, companySizeID, companyTypeID, countryID, addressID, companySpecialSituationID, mainEconomicActivityID, identifier, name, shareCapital, responsableFederativeEntity, fantasyName, registerDate, foreingCityName, startDate);
 }
