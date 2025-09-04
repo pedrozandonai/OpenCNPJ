@@ -3,7 +3,7 @@
 namespace OpenCnpj.ConsoleApp.Configurations;
 public class FormatRawDataSettings
 {
-    public int RecordsBatchAmount { get; set; } = 1000;
+    public int RecordsBatchAmount { get; set; } = -1;
     public int AmountAtTheSameTime { get; set; } = 50;
 
     public void Verify()
