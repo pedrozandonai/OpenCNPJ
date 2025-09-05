@@ -1,15 +1,23 @@
-﻿namespace OpenCnpj.Application.Companies.Domain;
+﻿using OpenCnpj.Application.Addresses.Domain;
+using OpenCnpj.Application.CompanySpecialSituations.Domain;
+using OpenCnpj.Application.Countries.Domain;
+using OpenCnpj.Application.EconomicActivities.Domain;
+using OpenCnpj.Application.Enums;
+using OpenCnpj.Application.LegalNatures.Domain;
+using OpenCnpj.Application.PartnersQualifications.Domain;
+
+namespace OpenCnpj.Application.Companies.Domain;
 public class Company
 {
-    public long ID { get; private set; }
-    public long LegalNatureID { get; private set; }
-    public long? MainPartnerQualificationID { get; private set; }
-    public int CompanySizeID { get; private set; }
-    public int CompanyTypeID { get; private set; }
-    public long? CountryID { get; private set; }
-    public long AddressID { get; private set; }
-    public long? CompanySpecialSituationID { get; private set; }
-    public long MainEconomicActivityID { get; private set; }
+    public long Id { get; private set; }
+    public LegalNature LegalNature { get; private set; }
+    public PartnerQualification? MainPartnerQualification { get; private set; }
+    public ECompanySize CompanySize { get; private set; }
+    public ECompanyType CompanyType { get; private set; }
+    public Country? Country { get; private set; }
+    public Address Address { get; private set; }
+    public CompanySpecialSituation? CompanySpecialSituation { get; private set; }
+    public EconomicActivity MainEconomicActivity { get; private set; }
     public string Identifier { get; private set; }
     public string Name { get; private set; }
     public decimal ShareCapital { get; private set; }
@@ -19,27 +27,31 @@ public class Company
     public string? ForeingCityName { get; private set; }
     public DateTime StartDate { get; private set; }
 
-    private Company(long iD, long legalNatureID, long? mainPartnerQualificationID, int companySizeID, int companyTypeID, long? countryID, long addressID, long? companySpecialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
+    private Company(long id, LegalNature legalNature, PartnerQualification? mainPartnerQualification, ECompanySize companySize, ECompanyType companyType, Country? country, Address address, CompanySpecialSituation? companySpecialSituation, EconomicActivity mainEconomicActivity, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
     {
-        ID=iD;
-        LegalNatureID=legalNatureID;
-        MainPartnerQualificationID=mainPartnerQualificationID;
-        CompanySizeID=companySizeID;
-        CompanyTypeID=companyTypeID;
-        CountryID=countryID;
-        AddressID=addressID;
-        CompanySpecialSituationID = companySpecialSituationID;
-        MainEconomicActivityID=mainEconomicActivityID;
-        Identifier=identifier;
-        Name=name;
-        ShareCapital=shareCapital;
-        ResponsableFederativeEntity=responsableFederativeEntity;
-        FantasyName=fantasyName;
-        RegisterDate= registerDate.HasValue ? registerDate.Value.ToLocalTime() : null;
-        ForeingCityName=foreingCityName;
-        StartDate = startDate.ToLocalTime();
+        Id = id;
+        LegalNature = legalNature;
+        MainPartnerQualification = mainPartnerQualification;
+        CompanySize = companySize;
+        CompanyType = companyType;
+        Country = country;
+        Address = address;
+        CompanySpecialSituation = companySpecialSituation;
+        MainEconomicActivity = mainEconomicActivity;
+        Identifier = identifier;
+        Name = name;
+        ShareCapital = shareCapital;
+        ResponsableFederativeEntity = responsableFederativeEntity;
+        FantasyName = fantasyName;
+        RegisterDate = registerDate;
+        ForeingCityName = foreingCityName;
+        StartDate = startDate;
     }
 
-    public static Company Create(long id, long legalNatureID, long? mainPartnerQualificationID, int companySizeID, int companyTypeID, long? countryID, long addressID, long? companySpecialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
-        => new(id, legalNatureID, mainPartnerQualificationID, companySizeID, companyTypeID, countryID, addressID, companySpecialSituationID, mainEconomicActivityID, identifier, name, shareCapital, responsableFederativeEntity, fantasyName, registerDate, foreingCityName, startDate);
+    private Company()
+    {
+    }
+
+    public static Company Create(long id, LegalNature legalNature, PartnerQualification? mainPartnerQualification, ECompanySize companySize, ECompanyType companyType, Country? country, Address address, CompanySpecialSituation? companySpecialSituation, EconomicActivity mainEconomicActivity, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
+        => new(id, legalNature, mainPartnerQualification, companySize, companyType, country, address, companySpecialSituation, mainEconomicActivity, identifier, name, shareCapital, responsableFederativeEntity, fantasyName, registerDate, foreingCityName, startDate);
 }

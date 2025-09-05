@@ -31,7 +31,7 @@ public static class ServicesInjection
         services.AddTransient<ILegalNatureService, LegalNatureService>();
         services.AddTransient<IPartnerQualificationService, PartnerQualificationService>();
         services.AddTransient<IReasonService, ReasonService>();
-        services.AddTransient<IBatchFileService, BatchFileService>();
+        //services.AddTransient<IBatchFileService, BatchFileService>();
         services.AddTransient<IAddressTypeService, AddressTypeService>();
         services.AddTransient<IAddressService, AddressService>();
         services.AddTransient<ICompanyService, CompanyService>();

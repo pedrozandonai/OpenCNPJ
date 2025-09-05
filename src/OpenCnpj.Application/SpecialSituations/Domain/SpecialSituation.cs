@@ -3,24 +3,24 @@
 namespace OpenCnpj.Application.SpecialSituations.Domain;
 public class SpecialSituation
 {
-    public int ID { get; private set; }
+    public int Id { get; private set; }
     public string Description { get; private set; }
 
     public SpecialSituation(int id, string description)
     {
-        ID = id;
+        Id = id;
         Description = description;
     }
 
     public static SpecialSituation Create(int id, string description)
         => new (id, description);
 
-    public Result SetID(int id)
+    public Result SetId(int id)
     {
-        if (ID != 0)
-            return Result.Failure("The ID for the record 'SpecialSituation' already has been set.");
+        if (Id != 0)
+            return Result.Failure("The Id for the record 'SpecialSituation' already has been set.");
 
-        ID = id;
+        Id = id;
 
         return Result.Success();
     }

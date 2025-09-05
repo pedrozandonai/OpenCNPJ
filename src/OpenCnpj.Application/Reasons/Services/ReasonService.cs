@@ -2,7 +2,6 @@
 using MongoDB.Driver;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Application.Reasons.Domain;
-using OpenCnpj.Application.Reasons.Repositories;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
 using System.Runtime.CompilerServices;
@@ -15,12 +14,17 @@ public class ReasonService(IMongoDatabaseFactory mongoDatabaseFactory, IReasonRe
     {
         try
         {
-            await reasonRepository.DatabaseFactory.BeginAsync();
+            await reasonRepository.Database.BeginTransactionAsync(cancellationToken);
 
+            List<Reason> reasons = [];
             await foreach (var reasonRawRecordRecord in GetAllReasonsRawRecords(cancellationToken))
-                await reasonRepository.Insert(Reason.Create(reasonRawRecordRecord.Code, reasonRawRecordRecord.Description), cancellationToken);
+                reasons.Add(Reason.Create(reasonRawRecordRecord.Code, reasonRawRecordRecord.Description));
 
-            await reasonRepository.DatabaseFactory.CommitAsync();
+            await reasonRepository.Insert(reasons, cancellationToken);
+
+            await reasonRepository.SaveAllChanges(cancellationToken);
+
+            await reasonRepository.Database.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception ex)
         {

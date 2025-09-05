@@ -407,7 +407,7 @@ public class InitialMigration : Migration
 
     private void InsertParterTypes()
     {
-        Insert.IntoTable("parter_types").Row(new { id = 1, description = "PESSOA JURÍCIDA" });
+        Insert.IntoTable("parter_types").Row(new { id = 1, description = "PESSOA JURÍCIdA" });
         Insert.IntoTable("parter_types").Row(new { id = 2, description = "PESSOA FÍSICA" });
         Insert.IntoTable("parter_types").Row(new { id = 3, description = "ESTRANGEIRO" });
     }

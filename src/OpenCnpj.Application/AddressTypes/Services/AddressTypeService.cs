@@ -1,6 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.Application.AddressTypes.Domain;
-using OpenCnpj.Application.AddressTypes.Repositories;
 
 namespace OpenCnpj.Application.AddressTypes.Services;
 
@@ -14,9 +13,9 @@ public class AddressTypeService(IAddressTypeRepository addressTypeRepository) : 
         {
             addressType = AddressType.Create(0, streetType);
 
-            var addressTypeID = await addressTypeRepository.Insert(addressType, cancellationToken);
+            await addressTypeRepository.Insert(addressType, cancellationToken);
 
-            var setIdResult = addressType.SetID(addressTypeID);
+            var setIdResult = addressType.SetId(addressType.Id);
             if (setIdResult.IsFailure)
                 return Result.Failure<AddressType>(setIdResult.Error);
         }

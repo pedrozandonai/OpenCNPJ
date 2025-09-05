@@ -7,7 +7,7 @@ namespace OpenCnpj.Application.RawRecords;
 public class PartnerRawRecord
 {
     public string BasicCnpj { get; set; }
-    public EParterType PartnerType { get; set; }
+    public EPartnerType PartnerType { get; set; }
     public string PartnerName { get; set; }
     public string PartnerDocument { get; set; } // CPF or CNPJ
     public string PartnerQualification { get; set; }

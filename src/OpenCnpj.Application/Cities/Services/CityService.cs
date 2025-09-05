@@ -1,7 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
 using OpenCnpj.Application.Cities.Domain;
-using OpenCnpj.Application.Cities.Repositories;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
@@ -15,8 +14,9 @@ public class CityService(IMongoDatabaseFactory mongoDatabaseFactory, ICityReposi
     {
         try
         {
-            await cityRepository.DatabaseFactory.BeginAsync();
+            await cityRepository.Database.BeginTransactionAsync(cancellationToken);
 
+            List<City> cities = [];
             await foreach (var cityRawRecord in GetAllCitiesRawRecords(cancellationToken))
             {
                 if (!long.TryParse(cityRawRecord.Code, out var code))
@@ -27,10 +27,14 @@ public class CityService(IMongoDatabaseFactory mongoDatabaseFactory, ICityReposi
                     continue;
                 }
 
-                await cityRepository.Insert(City.Create(code, cityRawRecord.Description), cancellationToken);
+                cities.Add(City.Create(code, cityRawRecord.Description));
             }
 
-            await cityRepository.DatabaseFactory.CommitAsync();
+            await cityRepository.Insert(cities, cancellationToken);
+
+            await cityRepository.SaveAllChanges(cancellationToken);
+
+            await cityRepository.Database.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception ex)
         {

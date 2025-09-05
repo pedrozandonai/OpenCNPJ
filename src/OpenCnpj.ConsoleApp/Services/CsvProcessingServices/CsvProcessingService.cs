@@ -5,7 +5,6 @@ using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Factory;
 using OpenCnpj.Core.Configurations;
-using OpenCnpj.Core.Constants;
 using Serilog;
 using System.Globalization;
 using System.Text;
@@ -119,7 +118,7 @@ public class CsvProcessingService(CsvStrategyFactory strategyFactory, IBatchServ
     private Encoding DetectEncoding(string filePath)
     {
         using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        using var reader = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(fs, Encoding.Latin1, detectEncodingFromByteOrderMarks: true);
         reader.Peek(); // força a detecção
         return reader.CurrentEncoding;
     }

@@ -1,6 +1,6 @@
 ﻿namespace OpenCnpj.Application.CompanyContacts.Domain;
 public class CompanyContact
 {
-    public long CompanyID { get; private set; }
-    public long ContactID { get; private set; }
+    public long CompanyId { get; private set; }
+    public long ContactId { get; private set; }
 }

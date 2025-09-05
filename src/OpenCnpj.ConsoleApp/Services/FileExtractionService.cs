@@ -44,7 +44,7 @@ public class FileExtractionService(IBatchService batchService, ILogger logger) :
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Error extracting files for batch {0}", batch.ID);
+            logger.Error(ex, "Error extracting files for batch {0}", batch.Id);
 
             return Result.Failure($"Error extracting files: {ex.Message}");
         }

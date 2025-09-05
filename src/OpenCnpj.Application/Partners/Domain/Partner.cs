@@ -1,31 +1,41 @@
-﻿namespace OpenCnpj.Application.Partners.Domain;
+﻿using OpenCnpj.Application.Companies.Domain;
+using OpenCnpj.Application.Countries.Domain;
+using OpenCnpj.Application.Enums;
+using OpenCnpj.Application.LegalRepresentatives.Domain;
+using OpenCnpj.Application.PartnersQualifications.Domain;
+
+namespace OpenCnpj.Application.Partners.Domain;
 public class Partner
 {
-    public long ID { get; private set; }
-    public long CompanyID { get; private set; }
-    public int PartnerTypeID { get; private set; }
-    public long? LegalRepresentativeID { get; private set; }
-    public int PartnerQualificationID { get; private set; }
+    public long Id { get; private set; }
+    public Company Company { get; private set; }
+    public EPartnerType PartnerType { get; private set; }
+    public LegalRepresentative? LegalRepresentative { get; private set; }
+    public PartnerQualification PartnerQualification { get; private set; }
     public string Name { get; private set; }
     public string? Identifier { get; private set; }
     public DateOnly StartDate { get; private set; }
-    public int? CountryID { get; private set; }
-    public int AgeRangeID { get; private set; }
+    public Country Country { get; private set; }
+    public EAgeRanges AgeRange { get; private set; }
 
-    private Partner(long iD, long companyID, int partnerTypeID, long? legalRepresentativeID, int partnerQualificationID, string name, string? identifier, DateOnly startDate, int? countryID, int ageRangeID)
+    private Partner(long id, Company company, EPartnerType partnerType, LegalRepresentative? legalRepresentative, PartnerQualification partnerQualification, string name, string? identifier, DateOnly startDate, Country country, EAgeRanges ageRange)
     {
-        ID=iD;
-        CompanyID=companyID;
-        PartnerTypeID=partnerTypeID;
-        LegalRepresentativeID=legalRepresentativeID;
-        PartnerQualificationID=partnerQualificationID;
-        Name=name;
-        Identifier=identifier;
-        StartDate=startDate;
-        CountryID=countryID;
-        AgeRangeID=ageRangeID;
+        Id = id;
+        Company = company;
+        PartnerType = partnerType;
+        LegalRepresentative = legalRepresentative;
+        PartnerQualification = partnerQualification;
+        Name = name;
+        Identifier = identifier;
+        StartDate = startDate;
+        Country = country;
+        AgeRange = ageRange;
     }
 
-    public static Partner Create(long companyID, int partnerTypeID, long? legalRepresentativeID, int partnerQualificationID, string name, string? identifier, DateOnly startDate, int? countryID, int ageRangeID)
-        => new (0, companyID, partnerTypeID, legalRepresentativeID, partnerQualificationID, name, identifier, startDate, countryID, ageRangeID);
+    private Partner()
+    {
+    }
+
+    public static Partner Create(Company company, EPartnerType partnerType, LegalRepresentative? legalRepresentative, PartnerQualification partnerQualification, string name, string? identifier, DateOnly startDate, Country country, EAgeRanges ageRange)
+        => new(0, company, partnerType, legalRepresentative, partnerQualification, name, identifier, startDate, country, ageRange);
 }

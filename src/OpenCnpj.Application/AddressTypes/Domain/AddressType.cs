@@ -17,12 +17,12 @@ public class AddressType : BaseRecord
     public static AddressType Create(int id, string description)
         => new(id, description);
 
-    public Result SetID(int id)
+    public Result SetId(int id)
     {
-        if (ID != 0)
-            return Result.Failure("The ID for the record 'AddressType' already has been set.");
+        if (Id != 0)
+            return Result.Failure("The Id for the record 'AddressType' already has been set.");
 
-        ID = id;
+        Id = id;
 
         return Result.Success();
     }

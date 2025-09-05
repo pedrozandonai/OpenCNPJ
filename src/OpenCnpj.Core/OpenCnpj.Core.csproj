@@ -7,6 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.11" />
 		<PackageReference Include="MongoDB.Driver" Version="3.4.3" />
 		<PackageReference Include="Npgsql" Version="9.0.3" />
@@ -18,7 +19,15 @@
 		<PackageReference Include="FluentMigrator.Runner" Version="7.1.0" />
 		<PackageReference Include="CSharpFunctionalExtensions" Version="3.6.0" />
 		<PackageReference Include="Serilog" Version="4.3.0" />
+		<PackageReference Include="System.Data.Common" Version="4.3.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Database\Helpers\" />
 	</ItemGroup>
 
 </Project>

@@ -2,15 +2,19 @@
 
 public class Country
 {
-    public long ID { get; protected set; }
+    public long Id { get; protected set; }
     public string Code { get; init; }
     public string Description { get; private set; }
 
-    public Country(long iD, string code, string description)
+    private Country(long iD, string code, string description)
     {
-        ID = iD;
+        Id = iD;
         Code = code;
         Description = description;
+    }
+
+    private Country()
+    {
     }
 
     public static Country Create(string code, string description)

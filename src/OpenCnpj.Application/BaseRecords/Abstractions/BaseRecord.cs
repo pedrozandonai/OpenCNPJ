@@ -2,12 +2,12 @@
 
 public abstract class BaseRecord
 {
-    public int ID { get; protected set; }
+    public int Id { get; protected set; }
     public string Description { get; private set; }
 
     protected BaseRecord(int id, string description)
     {
-        ID = id;
+        Id = id;
         Description = description;
     }
 

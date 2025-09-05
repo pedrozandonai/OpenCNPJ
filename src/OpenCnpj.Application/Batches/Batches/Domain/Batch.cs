@@ -5,28 +5,24 @@ using OpenCnpj.Core.Constants;
 namespace OpenCnpj.Application.Batches.Batches.Domain;
 public class Batch
 {
-    public int ID { get; private set; }
+    public int Id { get; private set; }
     public string Identifier { get; private set; }
     public string Status { get; private set; }
-    public EApplicationStep ApplicationLastStepID { get; private set; }
+    public EApplicationStep ApplicationLastStep { get; private set; }
     public string? Directory { get; private set; }
-
-    private Batch()
-    {
-    }
 
     private Batch(string identifier)
     {
         Identifier = identifier;
         Status = "Created";
-        ApplicationLastStepID = EApplicationStep.StartedApplication;
+        ApplicationLastStep = EApplicationStep.StartedApplication;
     }
 
-    public void SetID(int id)
-        => ID = id; 
+    public void SetId(int id)
+        => Id = id; 
 
-    public void SetLastStep(EApplicationStep applicationLastStepID)
-        => ApplicationLastStepID = applicationLastStepID; 
+    public void SetLastStep(EApplicationStep applicationLastStep)
+        => ApplicationLastStep = applicationLastStep; 
 
     public static Batch Create(string identifier)
         => new(identifier);

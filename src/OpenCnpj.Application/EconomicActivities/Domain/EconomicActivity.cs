@@ -2,13 +2,13 @@
 
 public class EconomicActivity
 {
-    public long ID { get; init; }
+    public long Id { get; init; }
     public string Code { get; init; }
     public string Description { get; private set; }
 
     public EconomicActivity(long id, string code, string description)
     {
-        ID = id;
+        Id = id;
         Code = code;
         Description = description;
     }

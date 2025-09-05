@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
+using OpenCnpj.Application.Countries.Domain;
 using OpenCnpj.Application.EconomicActivities.Domain;
-using OpenCnpj.Application.EconomicActivities.Repositories;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
@@ -16,12 +16,17 @@ public class EconomicActivityService(IEconomicActivityRepository economicActivit
     {
         try
         {
-            await economicActivityRepository.DatabaseFactory.BeginAsync();
+            await economicActivityRepository.Database.BeginTransactionAsync(cancellationToken);
 
+            List<EconomicActivity> economicActivities = [];
             await foreach (var economicActivityRawRecord in GetAllEconomicActivitiesRawRecords(cancellationToken))
-                await economicActivityRepository.Insert(EconomicActivity.Create(economicActivityRawRecord.Code, economicActivityRawRecord.Description), cancellationToken);
+                economicActivities.Add(EconomicActivity.Create(economicActivityRawRecord.Code, economicActivityRawRecord.Description));
 
-            await economicActivityRepository.DatabaseFactory.CommitAsync();
+            await economicActivityRepository.Insert(economicActivities, cancellationToken);
+
+            await economicActivityRepository.SaveAllChanges(cancellationToken);
+
+            await economicActivityRepository.Database.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception ex)
         {

@@ -2,32 +2,25 @@
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using OpenCnpj.Application.Addresses.Domain;
-using OpenCnpj.Application.Addresses.Repositories;
 using OpenCnpj.Application.Addresses.Services;
 using OpenCnpj.Application.AddressTypes.Domain;
-using OpenCnpj.Application.AddressTypes.Repositories;
 using OpenCnpj.Application.Cities.Domain;
-using OpenCnpj.Application.Cities.Repositories;
 using OpenCnpj.Application.Companies.Domain;
 using OpenCnpj.Application.Companies.Models;
-using OpenCnpj.Application.Companies.Repositories;
 using OpenCnpj.Application.CompanySpecialSituations.Domain;
-using OpenCnpj.Application.CompanySpecialSituations.Repositories;
 using OpenCnpj.Application.Countries.Domain;
-using OpenCnpj.Application.Countries.Repositories;
 using OpenCnpj.Application.EconomicActivities.Domain;
-using OpenCnpj.Application.EconomicActivities.Repositories;
 using OpenCnpj.Application.LegalNatures.Domain;
-using OpenCnpj.Application.LegalNatures.Repositories;
 using OpenCnpj.Application.PartnersQualifications.Domain;
-using OpenCnpj.Application.PartnersQualifications.Repositories;
 using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.Reasons.Domain;
 using OpenCnpj.Application.SpecialSituations.Domain;
-using OpenCnpj.Application.SpecialSituations.Repositories;
 using OpenCnpj.Core.Configurations;
+using OpenCnpj.Core.Database;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using OpenCnpj.Core.Extensions;
 using OpenCnpj.Core.Helpers;
+using OpenCnpj.Core.Interfaces;
 using Serilog;
 using System.Collections.Concurrent;
 
@@ -49,7 +42,7 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
     private readonly ConcurrentBag<Company> _companiesToInsert = [];
     private readonly ConcurrentBag<AddressType> _addressTypesToInsert = [];
-    private readonly ConcurrentBag<Address> _addressessToInsert = [];
+    private readonly ConcurrentBag<Address> _addressesToInsert = [];
     private readonly ConcurrentBag<SpecialSituation> _specialSituationsToInsert = [];
     private readonly ConcurrentBag<CompanySpecialSituation> _companySpecialSituationToInsert = [];
 
@@ -93,12 +86,12 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
                 }
 
                 using var scope = serviceProvider.CreateAsyncScope();
-                var dbFactory = scope.ServiceProvider.GetRequiredService<IDatabaseFactory>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<IDbContext>();
                 var services = ResolveServices(scope.ServiceProvider);
 
                 await Task.WhenAll(companyTasks);
 
-                await dbFactory.BeginAsync();
+                await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
                 if (_addressTypesToInsert.Count > 0)
                 {
@@ -107,11 +100,11 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
                     _addressTypesToInsert.Clear();
                 }
 
-                if (_addressessToInsert.Count > 0)
+                if (_addressesToInsert.Count > 0)
                 {
-                    await services.AddressRepository.CopyToTable(_addressessToInsert, cancellationToken);
+                    await services.AddressRepository.Insert(_addressesToInsert, cancellationToken);
 
-                    _addressessToInsert.Clear();
+                    _addressesToInsert.Clear();
                 }
 
                 if (_specialSituationsToInsert.Count > 0)
@@ -130,12 +123,14 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
                 if (_companiesToInsert.Count > 0)
                 {
-                    await services.CompanyRepository.CopyToTable(_companiesToInsert, cancellationToken);
+                    await services.CompanyRepository.Insert(_companiesToInsert, cancellationToken);
 
                     _companiesToInsert.Clear();
                 }
 
-                await dbFactory.CommitAsync();
+                await services.CompanyRepository.SaveAllChanges(cancellationToken);
+
+                await dbContext.Database.CommitTransactionAsync(cancellationToken);
 
                 if (!anyInPage)
                     break;
@@ -181,7 +176,7 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
         var addressType = _addressTypeCache.GetOrAdd(establishmentRawRecord.Address.StreetType, CreateAddressType);
 
-        var addressCreateResult = await CreateAddress(services, addressType!.ID, establishmentRawRecord, cancellationToken);
+        var addressCreateResult = await CreateAddress(services, addressType!, establishmentRawRecord, cancellationToken);
         if (addressCreateResult.IsFailure)
         {
             _logger.Warning(addressCreateResult.Error);
@@ -202,14 +197,12 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         var country = await _countryCache.GetOrAddAsync(establishmentRawRecord.CountryCode,
             async c => await services.CountryRepository.GetByCode(c, cancellationToken));
 
-        int? companySpecialSituationID = null;
+        CompanySpecialSituation? companySpecialSituation = null;
         if (!string.IsNullOrEmpty(establishmentRawRecord.SpecialStatus))
         {
             var specialSituation = _specialSituationCache.GetOrAdd(establishmentRawRecord.SpecialStatus, CreateSpecialSituation);
 
-            var companySpecialSituation = CreateCompanySpecialSituation(specialSituation!.ID, establishmentRawRecord.SpecialStatusDate!.Value);
-
-            companySpecialSituationID = companySpecialSituation.ID;
+             companySpecialSituation = CreateCompanySpecialSituation(specialSituation!, establishmentRawRecord.SpecialStatusDate!.Value);
         }
 
         var mainEconomicActivity = await _economicActivityCache.GetOrAddAsync(establishmentRawRecord.MainCnae, async e => await services.EconomicActivityRepository.GetByCode(e, cancellationToken));
@@ -223,14 +216,14 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
         var company = Company.Create(
             _companyIdGen.NextId(),
-            legalNature.ID,
-            mainPartnerQualification?.ID,
-            (int)companyRawRecord.CompanySize!,
-            (int)establishmentRawRecord.HeadOfficeOrBranch,
-            country?.ID,
-            addressCreateResult.Value.ID,
-            companySpecialSituationID,
-            mainEconomicActivity.ID,
+            legalNature,
+            mainPartnerQualification,
+            companyRawRecord.CompanySize!.Value,
+            establishmentRawRecord.HeadOfficeOrBranch,
+            country,
+            addressCreateResult.Value,
+            companySpecialSituation,
+            mainEconomicActivity,
             identifier,
             companyRawRecord.CorporateName,
             companyRawRecord.ShareCapital,
@@ -253,7 +246,7 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         return addressType;
     }
 
-    private async Task<Result<Address>> CreateAddress(ServiceResolvers services, int addressTypeID, EstablishmentRawRecord establishmentRawRecord, CancellationToken cancellationToken)
+    private async Task<Result<Address>> CreateAddress(ServiceResolvers services, AddressType addressType, EstablishmentRawRecord establishmentRawRecord, CancellationToken cancellationToken)
     {
         if (!long.TryParse(establishmentRawRecord.Address.MunicipalityCode, out var cityCode))
             return Result.Failure<Address>("Unable to parse MunicipalityCode");
@@ -271,9 +264,9 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         if (int.TryParse(establishmentRawRecord.Address.Number, out var parsedAddressNumber))
             addressNumber = parsedAddressNumber;
 
-        var address = Address.Create(_addressIdGen.NextId(), addressTypeID, city.ID, establishmentRawRecord.Address.StreetName, zipCode, establishmentRawRecord.Address.AdditionalAddressInfo, establishmentRawRecord.Address.District, addressNumber, establishmentRawRecord.Address.State);
+        var address = Address.Create(_addressIdGen.NextId(), addressType, city, establishmentRawRecord.Address.StreetName, zipCode, establishmentRawRecord.Address.AdditionalAddressInfo, establishmentRawRecord.Address.District, addressNumber, establishmentRawRecord.Address.State);
 
-        _addressessToInsert.Add(address);
+        _addressesToInsert.Add(address);
 
         return address;
     }
@@ -287,9 +280,9 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         return specialSituation;
     }
 
-    private CompanySpecialSituation CreateCompanySpecialSituation(int specialSituationID, DateTime specialStatusDate)
+    private CompanySpecialSituation CreateCompanySpecialSituation(SpecialSituation specialSituation, DateTime specialStatusDate)
     {
-        var companySpecialSituation = CompanySpecialSituation.Create((int)_companySpecialSituationIdGen.NextId(), specialSituationID, specialStatusDate);
+        var companySpecialSituation = CompanySpecialSituation.Create(_companySpecialSituationIdGen.NextId(), specialSituation, specialStatusDate);
 
         _companySpecialSituationToInsert.Add(companySpecialSituation);
 
@@ -301,11 +294,8 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         try
         {
             using var scope = serviceProvider.CreateAsyncScope();
-            var dbFactory = scope.ServiceProvider.GetRequiredService<IDatabaseFactory>();
 
             var services = ResolveServices(scope.ServiceProvider);
-
-            await dbFactory.BeginAsync();
 
             await PreloadLegalNatures(services.LegalNatureRepository, cancellationToken);
             await PreloadEconomicActivities(services.EconomicActivityRepository, cancellationToken);
@@ -400,7 +390,7 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         foreach (var addressType in addressTypes)
         {
             _addressTypeCache[addressType.Description] = addressType;
-            _addressTypeIdGen.SetIfGreater(addressType.ID);
+            _addressTypeIdGen.SetIfGreater(addressType.Id);
         }
     }
 
@@ -410,7 +400,7 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         foreach (var specialSituation in specialSituations)
         {
             _specialSituationCache[specialSituation.Description] = specialSituation;
-            _specialSituationIdGen.SetIfGreater(specialSituation.ID);
+            _specialSituationIdGen.SetIfGreater(specialSituation.Id);
         }
     }
 

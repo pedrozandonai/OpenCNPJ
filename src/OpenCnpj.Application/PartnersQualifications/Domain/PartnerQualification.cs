@@ -2,13 +2,13 @@
 
 public class PartnerQualification
 {
-    public long ID { get; init; }
+    public long Id { get; init; }
     public long Code { get; init; }
     public string Description { get; private set; }
 
     private PartnerQualification(long id, long code, string description)
     {
-        ID = id;
+        Id = id;
         Code = code;
         Description = description;
     }

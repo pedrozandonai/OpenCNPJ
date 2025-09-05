@@ -1,17 +1,17 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using OpenCnpj.Application.Addresses.Repositories;
-using OpenCnpj.Application.AddressTypes.Repositories;
-using OpenCnpj.Application.Batches.Batches.Repositories;
-using OpenCnpj.Application.Batches.BatchFiles.Repositories;
-using OpenCnpj.Application.Cities.Repositories;
-using OpenCnpj.Application.Companies.Repositories;
-using OpenCnpj.Application.CompanySpecialSituations.Repositories;
-using OpenCnpj.Application.Countries.Repositories;
-using OpenCnpj.Application.EconomicActivities.Repositories;
-using OpenCnpj.Application.LegalNatures.Repositories;
-using OpenCnpj.Application.PartnersQualifications.Repositories;
-using OpenCnpj.Application.Reasons.Repositories;
-using OpenCnpj.Application.SpecialSituations.Repositories;
+using OpenCnpj.Application.Addresses.Domain;
+using OpenCnpj.Application.AddressTypes.Domain;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Cities.Domain;
+using OpenCnpj.Application.Companies.Domain;
+using OpenCnpj.Application.CompanySpecialSituations.Domain;
+using OpenCnpj.Application.Countries.Domain;
+using OpenCnpj.Application.EconomicActivities.Domain;
+using OpenCnpj.Application.LegalNatures.Domain;
+using OpenCnpj.Application.PartnersQualifications.Domain;
+using OpenCnpj.Application.Reasons.Domain;
+using OpenCnpj.Application.SpecialSituations.Domain;
+using OpenCnpj.Infraestructure.Repositories;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class RepositoriesInjection
@@ -26,7 +26,6 @@ public static class RepositoriesInjection
         services.AddTransient<IPartnerQualificationRepository, PartnerQualificationRepository>();
         services.AddTransient<IReasonRepository, ReasonRepository>();
         services.AddTransient<ICompanyRepository, CompanyRepository>();
-        services.AddTransient<IBatchFileRepository, BatchFileRepository>();
         services.AddTransient<IAddressTypeRepository, AddressTypeRepository>();
         services.AddTransient<IAddressRepository, AddressRepository>();
         services.AddTransient<ISpecialSituationRepository, SpecialSituationRepository>();

@@ -1,7 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
 using OpenCnpj.Application.LegalNatures.Domain;
-using OpenCnpj.Application.LegalNatures.Repositories;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
@@ -15,12 +14,17 @@ public class LegalNatureService(IMongoDatabaseFactory mongoDatabaseFactory, ILeg
     {
         try
         {
-            await legalNatureRepository.DatabaseFactory.BeginAsync();
+            await legalNatureRepository.Database.BeginTransactionAsync(cancellationToken);
 
+            List<LegalNature> legalNatures = [];
             await foreach (var legalNatureRawRecordRecord in GetAllLegalNatureRawRecords(cancellationToken))
-                await legalNatureRepository.Insert(LegalNature.Create(legalNatureRawRecordRecord.Code, legalNatureRawRecordRecord.Description), cancellationToken);
+                legalNatures.Add(LegalNature.Create(legalNatureRawRecordRecord.Code, legalNatureRawRecordRecord.Description));
 
-            await legalNatureRepository.DatabaseFactory.CommitAsync();
+            await legalNatureRepository.Insert(legalNatures, cancellationToken);
+
+            await legalNatureRepository.SaveAllChanges(cancellationToken);
+
+            await legalNatureRepository.Database.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception ex)
         {

@@ -1,8 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.Application.Addresses.Domain;
-using OpenCnpj.Application.Addresses.Repositories;
 using OpenCnpj.Application.AddressTypes.Services;
-using OpenCnpj.Application.Cities.Repositories;
+using OpenCnpj.Application.Cities.Domain;
 using OpenCnpj.Application.RawRecords;
 
 namespace OpenCnpj.Application.Addresses.Services;
@@ -31,13 +30,9 @@ public class AddressService(IAddressTypeService addressTypeService, ICityReposit
         if (int.TryParse(establishmentAddress.Number, out var parsedAddressNumber))
             addressNumber = parsedAddressNumber;
 
-        var address = Address.Create(0, addressType.Value.ID, city.ID, establishmentAddress.StreetName, addressNumber, establishmentAddress.AdditionalAddressInfo, establishmentAddress.District, zipCode, establishmentAddress.State);
+        var address = Address.Create(0, addressType.Value, city, establishmentAddress.StreetName, addressNumber, establishmentAddress.AdditionalAddressInfo, establishmentAddress.District, zipCode, establishmentAddress.State);
 
-        var addressID = await addressRepository.Insert(address, cancellationToken);
-
-        var setIdResult = address.SetID(addressID);
-        if (setIdResult.IsFailure)
-            return Result.Failure<Address>(setIdResult.Error);
+        await addressRepository.Insert(address, cancellationToken);
 
         return Result.Success(address);
     }

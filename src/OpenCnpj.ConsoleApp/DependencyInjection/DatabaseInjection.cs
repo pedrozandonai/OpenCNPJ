@@ -1,12 +1,15 @@
 ﻿using FluentMigrator.Runner;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory;
 using OpenCnpj.Core.Database.Factory.Interfaces;
-using OpenCnpj.Core.Database.Helpers;
 using OpenCnpj.Core.Database.Migrations;
+using OpenCnpj.Core.Interfaces;
+using OpenCnpj.Infraestructure.DbContexts;
+using OpenCnpj.Infraestructure.Helpers;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 
@@ -22,7 +25,16 @@ public static class DatabaseInjection
         if (string.IsNullOrEmpty(mongoConnectionString))
             throw new Exception("The 'MongoDB' connection string can not be null or empty.");
 
-        services.AddScoped<IDatabaseFactory>(sr => new DatabaseFactory(postgresConnectionString));
+        services.AddDbContext<OpenCnpjDbContext>(options =>
+        {
+            options.UseNpgsql(postgresConnectionString, npgsqlOptions =>
+            {
+
+            });
+        });
+
+        services.AddScoped<IDbContext>(provider =>
+            provider.GetRequiredService<OpenCnpjDbContext>());
 
         var mongoDatabaseFactory = new MongoDatabaseFactory(mongoConnectionString, "OpenCnpj");
         services.AddSingleton<IMongoDatabaseFactory>(sr => mongoDatabaseFactory);
@@ -36,20 +48,12 @@ public static class DatabaseInjection
         .AddMongoDb(sr => mongoDatabaseFactory.Client,
             failureStatus: HealthStatus.Unhealthy);
 
-        services.AddFluentMigratorCore()
-            .ConfigureRunner(rb => rb
-            .AddPostgres()
-            .WithGlobalConnectionString(postgresConnectionString)
-            .ScanIn(typeof(InitialMigration).Assembly).For.All())
-            .AddLogging(lb => lb.AddFluentMigratorConsole());
-
         return services;
     }
 
     public static async Task UpdateDatabase(IServiceProvider serviceProvider)
     {
         var databaseSettings = serviceProvider.GetRequiredService<DatabaseSettings>();
-        var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
         var mongoFactory = serviceProvider.GetRequiredService<IMongoDatabaseFactory>();
 
         if (databaseSettings.FormatMongoDB!.Value)
@@ -65,6 +69,8 @@ public static class DatabaseInjection
         if (databaseSettings.FormatPostgres!.Value)
             await SqlDatabaseHelper.DropSchema(serviceProvider);
 
-        runner.MigrateUp();
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OpenCnpjDbContext>();
+        await dbContext.Database.MigrateAsync();
     }
 }

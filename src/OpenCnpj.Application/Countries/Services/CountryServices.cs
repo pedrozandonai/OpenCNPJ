@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
+using OpenCnpj.Application.Cities.Domain;
 using OpenCnpj.Application.Countries.Domain;
-using OpenCnpj.Application.Countries.Repositories;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
@@ -15,12 +15,17 @@ public class CountryServices(IMongoDatabaseFactory mongoDatabaseFactory, ICountr
     {
         try
         {
-            await countryRepository.DatabaseFactory.BeginAsync();
+            await countryRepository.Database.BeginTransactionAsync(cancellationToken);
 
+            List<Country> countries = [];
             await foreach (var countryRawRecord in GetAllCountriesRawRecords(cancellationToken))
-                await countryRepository.Insert(Country.Create(countryRawRecord.Code, countryRawRecord.Description), cancellationToken);
+                countries.Add(Country.Create(countryRawRecord.Code, countryRawRecord.Description));
 
-            await countryRepository.DatabaseFactory.CommitAsync();
+            await countryRepository.Insert(countries, cancellationToken);
+
+            await countryRepository.SaveAllChanges(cancellationToken);
+
+            await countryRepository.Database.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception ex)
         {

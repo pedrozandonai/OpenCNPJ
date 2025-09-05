@@ -19,7 +19,7 @@ public class IdGenerator
 
     /// <summary>
     /// Ajusta o contador interno se o valor informado for maior que o atual.
-    /// Isso garante que novos IDs não colidam com registros já existentes no banco.
+    /// Isso garante que novos Ids não colidam com registros já existentes no banco.
     /// </summary>
     public void SetIfGreater(long value)
     {

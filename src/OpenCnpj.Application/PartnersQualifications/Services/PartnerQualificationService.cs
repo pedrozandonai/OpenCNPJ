@@ -1,7 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
 using OpenCnpj.Application.PartnersQualifications.Domain;
-using OpenCnpj.Application.PartnersQualifications.Repositories;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
@@ -15,8 +14,9 @@ public class PartnerQualificationService(IMongoDatabaseFactory mongoDatabaseFact
     {
         try
         {
-            await partnerQualificationRepository.DatabaseFactory.BeginAsync();
+            await partnerQualificationRepository.Database.BeginTransactionAsync(cancellationToken);
 
+            List<PartnerQualification> partnerQualifications = [];
             await foreach (var partnerQualificationRawRecordRecord in GetAllPartnerQualificationRawRecords(cancellationToken))
             {
                 if (!long.TryParse(partnerQualificationRawRecordRecord.Code, out var code))
@@ -26,10 +26,14 @@ public class PartnerQualificationService(IMongoDatabaseFactory mongoDatabaseFact
                         .Warning("Unable to cast partner qualification code string to long.");
                     continue;
                 }
-                await partnerQualificationRepository.Insert(PartnerQualification.Create(code, partnerQualificationRawRecordRecord.Description), cancellationToken);
+                partnerQualifications.Add(PartnerQualification.Create(code, partnerQualificationRawRecordRecord.Description));
             }
 
-            await partnerQualificationRepository.DatabaseFactory.CommitAsync();
+            await partnerQualificationRepository.Insert(partnerQualifications, cancellationToken);
+
+            await partnerQualificationRepository.SaveAllChanges(cancellationToken);
+
+            await partnerQualificationRepository.Database.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception ex)
         {
