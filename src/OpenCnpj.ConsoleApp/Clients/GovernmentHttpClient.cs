@@ -1,9 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
-using OpenCnpj.ConsoleApp.Configurations;
-using OpenCnpj.ConsoleApp.Constants;
+using OpenCnpj.Core.Configurations;
+using OpenCnpj.Core.Constants;
 using Polly;
 using Serilog;
 using System.Net;
@@ -112,7 +112,7 @@ public class GovernmentHttpClient(HttpClient httpClient, GovSetttings govSetttin
             {
                 await retryPolicy.ExecuteAsync(async () =>
                 {
-                    var rawDirectory = Paths.GetRawDirectoryByBatch(batch);
+                    var rawDirectory = batch.GetRawDirectoryByBatch();
                     if (!Directory.Exists(rawDirectory))
                         Directory.CreateDirectory(rawDirectory);
 

@@ -2,11 +2,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using OpenCnpj.ConsoleApp.Configurations;
-using OpenCnpj.ConsoleApp.Core.Database.Factory;
-using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
-using OpenCnpj.ConsoleApp.Core.Database.Helpers;
-using OpenCnpj.ConsoleApp.Core.Database.Migrations;
+using OpenCnpj.Core.Configurations;
+using OpenCnpj.Core.Database.Factory;
+using OpenCnpj.Core.Database.Factory.Interfaces;
+using OpenCnpj.Core.Database.Helpers;
+using OpenCnpj.Core.Database.Migrations;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 

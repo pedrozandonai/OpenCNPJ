@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Queries;
+using OpenCnpj.Application.Batches.Batches.Queries;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class QueriesInjection

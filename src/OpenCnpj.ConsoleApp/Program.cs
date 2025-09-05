@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using OpenCnpj.ConsoleApp.DependencyInjection;
-using OpenCnpj.ConsoleApp.Helpers;
+using OpenCnpj.Core.Helpers;
 using Serilog;
 
 namespace OpenCnpj.ConsoleApp;

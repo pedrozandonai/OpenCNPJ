@@ -1,11 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenCnpj.ConsoleApp.Application.ApplicationSteps.Models.Enums;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Repositories;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
+using OpenCnpj.Application.ApplicationSteps.Models.Enums;
+using OpenCnpj.Application.Batches.Batches.Repositories;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Clients.Interfaces;
-using OpenCnpj.ConsoleApp.Helpers;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices;
 using OpenCnpj.ConsoleApp.Services.Interfaces;
 using Serilog;

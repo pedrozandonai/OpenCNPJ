@@ -1,5 +1,5 @@
 ﻿using CsvHelper.Configuration;
-using OpenCnpj.ConsoleApp.Application.RawRecords;
+using OpenCnpj.Application.RawRecords;
 
 namespace OpenCnpj.ConsoleApp.Mappers;
 public class RecordBaseMapper : ClassMap<RawRecordBase>

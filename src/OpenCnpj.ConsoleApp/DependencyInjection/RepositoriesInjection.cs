@@ -1,17 +1,17 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using OpenCnpj.ConsoleApp.Application.Addresses.Repositories;
-using OpenCnpj.ConsoleApp.Application.AddressTypes.Repositories;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Repositories;
-using OpenCnpj.ConsoleApp.Application.Batches.BatchFiles.Repositories;
-using OpenCnpj.ConsoleApp.Application.Cities.Repositories;
-using OpenCnpj.ConsoleApp.Application.Companies.Repositories;
-using OpenCnpj.ConsoleApp.Application.CompanySpecialSituations.Repositories;
-using OpenCnpj.ConsoleApp.Application.Countries.Repositories;
-using OpenCnpj.ConsoleApp.Application.EconomicActivities.Repositories;
-using OpenCnpj.ConsoleApp.Application.LegalNatures.Repositories;
-using OpenCnpj.ConsoleApp.Application.PartnersQualifications.Repositories;
-using OpenCnpj.ConsoleApp.Application.Reasons.Repositories;
-using OpenCnpj.ConsoleApp.Application.SpecialSituations.Repositories;
+using OpenCnpj.Application.Addresses.Repositories;
+using OpenCnpj.Application.AddressTypes.Repositories;
+using OpenCnpj.Application.Batches.Batches.Repositories;
+using OpenCnpj.Application.Batches.BatchFiles.Repositories;
+using OpenCnpj.Application.Cities.Repositories;
+using OpenCnpj.Application.Companies.Repositories;
+using OpenCnpj.Application.CompanySpecialSituations.Repositories;
+using OpenCnpj.Application.Countries.Repositories;
+using OpenCnpj.Application.EconomicActivities.Repositories;
+using OpenCnpj.Application.LegalNatures.Repositories;
+using OpenCnpj.Application.PartnersQualifications.Repositories;
+using OpenCnpj.Application.Reasons.Repositories;
+using OpenCnpj.Application.SpecialSituations.Repositories;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class RepositoriesInjection

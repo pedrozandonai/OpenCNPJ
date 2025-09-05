@@ -1,5 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Domain;
 
 namespace OpenCnpj.ConsoleApp.Clients.Interfaces;
 

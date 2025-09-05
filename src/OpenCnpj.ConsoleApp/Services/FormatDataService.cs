@@ -1,11 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.ConsoleApp.Application.Cities.Services;
-using OpenCnpj.ConsoleApp.Application.Companies.Services;
-using OpenCnpj.ConsoleApp.Application.Countries.Services;
-using OpenCnpj.ConsoleApp.Application.EconomicActivities.Services;
-using OpenCnpj.ConsoleApp.Application.LegalNatures.Services;
-using OpenCnpj.ConsoleApp.Application.PartnersQualifications.Services;
-using OpenCnpj.ConsoleApp.Application.Reasons.Services;
+using OpenCnpj.Application.Cities.Services;
+using OpenCnpj.Application.Companies.Services;
+using OpenCnpj.Application.Countries.Services;
+using OpenCnpj.Application.EconomicActivities.Services;
+using OpenCnpj.Application.LegalNatures.Services;
+using OpenCnpj.Application.PartnersQualifications.Services;
+using OpenCnpj.Application.Reasons.Services;
 using OpenCnpj.ConsoleApp.Services.Interfaces;
 using Serilog;
 

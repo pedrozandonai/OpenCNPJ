@@ -1,11 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper;
 using CsvHelper.Configuration;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
-using OpenCnpj.ConsoleApp.Configurations;
-using OpenCnpj.ConsoleApp.Constants;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Factory;
+using OpenCnpj.Core.Configurations;
+using OpenCnpj.Core.Constants;
 using Serilog;
 using System.Globalization;
 using System.Text;
@@ -19,7 +19,7 @@ public class CsvProcessingService(CsvStrategyFactory strategyFactory, IBatchServ
         if (updateBatchResult.IsFailure)
             return Result.Failure(updateBatchResult.Error);
 
-        var extractedDirectory = Paths.GetExtractedDirectoryByBatch(batch);
+        var extractedDirectory = batch.GetExtractedDirectoryByBatch();
 
         if (!Directory.Exists(extractedDirectory))
         {

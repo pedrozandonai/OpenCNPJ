@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenCnpj.ConsoleApp.Configurations;
+using OpenCnpj.Core.Configurations;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class ConfigurationsInjection

@@ -1,12 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
-using OpenCnpj.ConsoleApp.Application.RawRecords;
-using OpenCnpj.ConsoleApp.Configurations;
-using OpenCnpj.ConsoleApp.Core.Database.Factory;
-using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
-using OpenCnpj.ConsoleApp.Helpers;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.RawRecords;
 using OpenCnpj.ConsoleApp.Mappers;
+using OpenCnpj.Core.Configurations;
+using OpenCnpj.Core.Database.Factory.Interfaces;
+using OpenCnpj.Core.Helpers;
 using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies;

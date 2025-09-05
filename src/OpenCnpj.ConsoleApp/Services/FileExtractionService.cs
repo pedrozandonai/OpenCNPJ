@@ -1,7 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Domain;
-using OpenCnpj.ConsoleApp.Application.Batches.Batches.Services;
-using OpenCnpj.ConsoleApp.Constants;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Services.Interfaces;
 using Serilog;
 using System.IO.Compression;
@@ -22,7 +21,7 @@ public class FileExtractionService(IBatchService batchService, ILogger logger) :
             if (verificationResult.IsFailure)
                 return verificationResult;
 
-            var extractedDirectory = Paths.GetExtractedDirectoryByBatch(batch);
+            var extractedDirectory = batch.GetExtractedDirectoryByBatch();
 
             if (!Directory.Exists(extractedDirectory))
                 Directory.CreateDirectory(extractedDirectory);

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using OpenCnpj.ConsoleApp.Application.RawRecords;
-using OpenCnpj.ConsoleApp.Configurations;
-using OpenCnpj.ConsoleApp.Core.Database.Factory.Interfaces;
+using OpenCnpj.Application.RawRecords;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies;
+using OpenCnpj.Core.Configurations;
+using OpenCnpj.Core.Database.Factory.Interfaces;
 using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Factory;
