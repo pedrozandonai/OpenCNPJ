@@ -15,10 +15,10 @@ public class PartnerMapper : ClassMap<PartnerRawRecord>
         Map(p => p.EntryDate).Index(5).Convert(c =>
         {
             var val = c.Row.GetField(5);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
-        }); ;
+        });
         Map(p => p.CountryCode).Index(6);
         Map(p => p.RepresentativeDocument).Index(7);
         Map(p => p.RepresentativeName).Index(8);

@@ -3,8 +3,10 @@ using OpenCnpj.Application.RawRecords;
 
 namespace OpenCnpj.Application.Companies.Models;
 [BsonIgnoreExtraElements]
-public class CompanyWithEstablishments : CompanyRawRecord
+public class CompanyDetailedInformation : CompanyRawRecord
 {
     public List<EstablishmentRawRecord> Establishments { get; set; } = [];
+    public List<PartnerRawRecord> Partners { get; set; } = [];
+    public List<SimpleDataRawRecord> SimpleData { get; set; } = [];
 }
 

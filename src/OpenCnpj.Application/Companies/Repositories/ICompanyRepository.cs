@@ -6,4 +6,5 @@ public interface ICompanyRepository : IOpenCnpjDatabaseFactory
 {
     Task Insert(IEnumerable<Company> companies, CancellationToken cancellationToken);
     Task CopyToTable(IEnumerable<Company> companies, CancellationToken cancellationToken);
+    Task<Company?> GetByBasicCnpj(string basicCnpj, CancellationToken cancellationToken);
 }

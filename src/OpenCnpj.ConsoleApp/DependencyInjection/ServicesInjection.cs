@@ -10,6 +10,7 @@ using OpenCnpj.Application.EconomicActivities.Services;
 using OpenCnpj.Application.LegalNatures.Services;
 using OpenCnpj.Application.PartnersQualifications.Services;
 using OpenCnpj.Application.Reasons.Services;
+using OpenCnpj.Application.Simples.Services;
 using OpenCnpj.ConsoleApp.Services;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Factory;
@@ -35,6 +36,7 @@ public static class ServicesInjection
         services.AddTransient<IAddressTypeService, AddressTypeService>();
         services.AddTransient<IAddressService, AddressService>();
         services.AddTransient<ICompanyService, CompanyService>();
+        services.AddTransient<ISimpleService, SimpleService>();
 
         // *--Strategies for CSV Files--*
         services.AddScoped<CsvStrategyFactory>();

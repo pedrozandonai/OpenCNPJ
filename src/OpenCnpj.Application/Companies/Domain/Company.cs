@@ -21,22 +21,22 @@ public class Company
 
     private Company(long iD, long legalNatureID, long? mainPartnerQualificationID, int companySizeID, int companyTypeID, long? countryID, long addressID, long? companySpecialSituationID, long mainEconomicActivityID, string identifier, string name, decimal shareCapital, string? responsableFederativeEntity, string? fantasyName, DateTime? registerDate, string? foreingCityName, DateTime startDate)
     {
-        ID=iD;
-        LegalNatureID=legalNatureID;
-        MainPartnerQualificationID=mainPartnerQualificationID;
-        CompanySizeID=companySizeID;
-        CompanyTypeID=companyTypeID;
-        CountryID=countryID;
-        AddressID=addressID;
+        ID = iD;
+        LegalNatureID = legalNatureID;
+        MainPartnerQualificationID = mainPartnerQualificationID;
+        CompanySizeID = companySizeID;
+        CompanyTypeID = companyTypeID;
+        CountryID = countryID;
+        AddressID = addressID;
         CompanySpecialSituationID = companySpecialSituationID;
-        MainEconomicActivityID=mainEconomicActivityID;
-        Identifier=identifier;
-        Name=name;
-        ShareCapital=shareCapital;
-        ResponsableFederativeEntity=responsableFederativeEntity;
-        FantasyName=fantasyName;
-        RegisterDate= registerDate.HasValue ? registerDate.Value.ToLocalTime() : null;
-        ForeingCityName=foreingCityName;
+        MainEconomicActivityID = mainEconomicActivityID;
+        Identifier = identifier;
+        Name = name;
+        ShareCapital = shareCapital;
+        ResponsableFederativeEntity = responsableFederativeEntity;
+        FantasyName = fantasyName;
+        RegisterDate = registerDate.HasValue ? registerDate.Value.ToLocalTime() : null;
+        ForeingCityName = foreingCityName;
         StartDate = startDate.ToLocalTime();
     }
 

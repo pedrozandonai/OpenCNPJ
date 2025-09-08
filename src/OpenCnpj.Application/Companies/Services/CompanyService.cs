@@ -11,17 +11,34 @@ using OpenCnpj.Application.Cities.Repositories;
 using OpenCnpj.Application.Companies.Domain;
 using OpenCnpj.Application.Companies.Models;
 using OpenCnpj.Application.Companies.Repositories;
+using OpenCnpj.Application.CompaniesSecondaryEconomicActivities.Domain;
+using OpenCnpj.Application.CompaniesSecondaryEconomicActivities.Repositories;
+using OpenCnpj.Application.CompanyContacts.Domain;
+using OpenCnpj.Application.CompanyContacts.Repositories;
 using OpenCnpj.Application.CompanySpecialSituations.Domain;
 using OpenCnpj.Application.CompanySpecialSituations.Repositories;
+using OpenCnpj.Application.Contacts.Domain;
+using OpenCnpj.Application.Contacts.Repositories;
 using OpenCnpj.Application.Countries.Domain;
 using OpenCnpj.Application.Countries.Repositories;
 using OpenCnpj.Application.EconomicActivities.Domain;
 using OpenCnpj.Application.EconomicActivities.Repositories;
+using OpenCnpj.Application.Enums;
 using OpenCnpj.Application.LegalNatures.Domain;
 using OpenCnpj.Application.LegalNatures.Repositories;
+using OpenCnpj.Application.LegalRepresentatives.Domain;
+using OpenCnpj.Application.LegalRepresentatives.Repositories;
+using OpenCnpj.Application.Meis.Domain;
+using OpenCnpj.Application.Meis.Repositories;
+using OpenCnpj.Application.Partners.Domain;
+using OpenCnpj.Application.Partners.Repositories;
 using OpenCnpj.Application.PartnersQualifications.Domain;
 using OpenCnpj.Application.PartnersQualifications.Repositories;
+using OpenCnpj.Application.Phones.Domain;
+using OpenCnpj.Application.Phones.Repositories;
 using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.Simples.Domain;
+using OpenCnpj.Application.Simples.Repositories;
 using OpenCnpj.Application.SpecialSituations.Domain;
 using OpenCnpj.Application.SpecialSituations.Repositories;
 using OpenCnpj.Core.Configurations;
@@ -41,17 +58,32 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
     private readonly ConcurrentDictionary<string, SpecialSituation?> _specialSituationCache = new();
     private readonly ConcurrentDictionary<long, City?> _cityCache = new();
     private readonly ConcurrentDictionary<string, AddressType?> _addressTypeCache = new();
+    private readonly ConcurrentDictionary<string, Company> _companiesCache = new();
     private readonly IdGenerator _addressTypeIdGen = new();
     private readonly IdGenerator _addressIdGen = new();
     private readonly IdGenerator _companyIdGen = new();
     private readonly IdGenerator _specialSituationIdGen = new();
     private readonly IdGenerator _companySpecialSituationIdGen = new();
+    private readonly IdGenerator _partnerIdGen = new();
+    private readonly IdGenerator _legalRepresentativeIdGen = new();
+    private readonly IdGenerator _simpleIdGen = new();
+    private readonly IdGenerator _meiIdGen = new();
+    private readonly IdGenerator _phoneIdGen = new();
+    private readonly IdGenerator _contactIdGen = new();
 
-    private readonly ConcurrentBag<Company> _companiesToInsert = [];
-    private readonly ConcurrentBag<AddressType> _addressTypesToInsert = [];
-    private readonly ConcurrentBag<Address> _addressessToInsert = [];
-    private readonly ConcurrentBag<SpecialSituation> _specialSituationsToInsert = [];
-    private readonly ConcurrentBag<CompanySpecialSituation> _companySpecialSituationToInsert = [];
+    private readonly List<Company> _companiesToInsert = [];
+    private readonly List<AddressType> _addressTypesToInsert = [];
+    private readonly List<Address> _addressessToInsert = [];
+    private readonly List<SpecialSituation> _specialSituationsToInsert = [];
+    private readonly List<CompanySpecialSituation> _companySpecialSituationToInsert = [];
+    private readonly List<Partner> _partnersToInsert = [];
+    private readonly List<LegalRepresentative> _legalRepresentativesToInsert = [];
+    private readonly List<Simple> _simplesToInsert = [];
+    private readonly List<Mei> _meisToInsert = [];
+    private readonly List<Phone> _phonesToInsert = [];
+    private readonly List<Contact> _contactsToInsert = [];
+    private readonly List<CompanyContact> _companyContactsToInsert = [];
+    private readonly List<CompanySecondaryEconomicActivity> _companySecondaryEconomicActivityToInsert = [];
 
     private readonly ILogger _logger = logger.ForContext<CompanyService>();
     public async Task<Result> CreateCompanies(CancellationToken cancellationToken)
@@ -75,7 +107,18 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
                         mongoDatabaseFactory.Database.GetCollection<EstablishmentRawRecord>("EstablishmentsRaw"),
                         c => c.BasicCnpj,
                         e => e.BasicCnpj,
-                        (CompanyWithEstablishments c) => c.Establishments
+                        (CompanyDetailedInformation c) => c.Establishments
+                    ).Lookup(
+                        mongoDatabaseFactory.Database.GetCollection<PartnerRawRecord>("PartnersRaw"),
+                        c => c.BasicCnpj,
+                        p => p.BasicCnpj,
+                        (CompanyDetailedInformation c) => c.Partners
+                    )
+                    .Lookup(
+                        mongoDatabaseFactory.Database.GetCollection<SimpleDataRawRecord>("SimplesDataRaw"),
+                        c => c.BasicCnpj,
+                        s => s.BasicCnpj,
+                        (CompanyDetailedInformation c) => c.SimpleData
                     );
 
                 using var cursor = await pipeline.ToCursorAsync(cancellationToken);
@@ -113,7 +156,7 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
                     _addressessToInsert.Clear();
                 }
-
+                    
                 if (_specialSituationsToInsert.Count > 0)
                 {
                     await services.SpecialSituationRepository.Insert(_specialSituationsToInsert, cancellationToken);
@@ -135,6 +178,62 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
                     _companiesToInsert.Clear();
                 }
 
+                if (_phonesToInsert.Count > 0)
+                {
+                    await services.PhoneRepository.CopyToTable(_phonesToInsert, cancellationToken);
+
+                    _phonesToInsert.Clear();
+                }
+
+                if (_contactsToInsert.Count > 0)
+                {
+                    await services.ContactRepository.CopyToTable(_contactsToInsert, cancellationToken);
+
+                    _contactsToInsert.Clear();
+                }
+
+                if (_companyContactsToInsert.Count > 0)
+                {
+                    await services.CompanyContactRepository.CopyToTable(_companyContactsToInsert, cancellationToken);
+
+                    _companyContactsToInsert.Clear();
+                }
+
+                if (_legalRepresentativesToInsert.Count > 0)
+                {
+                    await services.LegalRepresentativeRepository.CopyToTable(_legalRepresentativesToInsert, cancellationToken);
+
+                    _legalRepresentativesToInsert.Clear();
+                }
+
+                if (_partnersToInsert.Count > 0)
+                {
+                    await services.PartnerRepository.CopyToTable(_partnersToInsert, cancellationToken);
+
+                    _partnersToInsert.Clear();
+                }
+
+                if (_meisToInsert.Count > 0)
+                {
+                    await services.MeiRepository.CopyToTable(_meisToInsert, cancellationToken);
+
+                    _meisToInsert.Clear();
+                }
+
+                if (_simplesToInsert.Count > 0)
+                {
+                    await services.SimpleRepository.CopyToTable(_simplesToInsert, cancellationToken);
+
+                    _simplesToInsert.Clear();
+                }
+
+                if (_companySecondaryEconomicActivityToInsert.Count > 0)
+                {
+                    await services.CompanySecondaryEconomicActivityRepository.CopyToTable(_companySecondaryEconomicActivityToInsert, cancellationToken);
+
+                    _companySecondaryEconomicActivityToInsert.Clear();
+                }
+
                 await dbFactory.CommitAsync();
 
                 if (!anyInPage)
@@ -152,26 +251,20 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         }
     }
 
-    private async Task ProcessCompany(CompanyWithEstablishments companyWithEstablishments, CancellationToken cancellationToken)
+    private async Task ProcessCompany(CompanyDetailedInformation companyDetailedInformation, CancellationToken cancellationToken)
     {
-
         using var scope = serviceProvider.CreateAsyncScope();
 
         var services = ResolveServices(scope.ServiceProvider);
 
-        var tasks = companyWithEstablishments.Establishments.Select(async (establishmentRawRecord) =>
-        {
-            try
-            {
-                await ProcessEstablishments(companyWithEstablishments, establishmentRawRecord, services, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "An exception has occurred while creating new companies by establishments.");
-            }
-        });
+        foreach (var establishmentRawRecord in companyDetailedInformation.Establishments)
+            await ProcessEstablishments(companyDetailedInformation, establishmentRawRecord, services, cancellationToken);
 
-        await Task.WhenAll(tasks);
+        foreach (var partnerRawRecord in companyDetailedInformation.Partners)
+            await ProcessPartners(partnerRawRecord, services, cancellationToken);
+
+        foreach (var simpleDataRawRecord in companyDetailedInformation.SimpleData)
+            ProcessSimples(simpleDataRawRecord, cancellationToken);
     }
 
     private async Task ProcessEstablishments(CompanyRawRecord companyRawRecord, EstablishmentRawRecord establishmentRawRecord, ServiceResolvers services, CancellationToken cancellationToken)
@@ -181,23 +274,21 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
         var addressType = _addressTypeCache.GetOrAdd(establishmentRawRecord.Address.StreetType, CreateAddressType);
 
-        var addressCreateResult = await CreateAddress(services, addressType!.ID, establishmentRawRecord, cancellationToken);
+        var addressCreateResult = CreateAddress(addressType!.ID, establishmentRawRecord);
         if (addressCreateResult.IsFailure)
         {
             _logger.Warning(addressCreateResult.Error);
             return;
         }
 
-        var legalNature = await _legalNatureCache.GetOrAddAsync(companyRawRecord.LegalNatureCode.ToString(), async c =>
-            await services.LegalNatureRepository.GetByCode(c, cancellationToken));
+        var legalNature = _legalNatureCache.GetValueOrDefault(companyRawRecord.LegalNatureCode.ToString());
         if (legalNature == null)
         {
             _logger.Warning("Unable to fetch the legal nature of the company.");
             return;
         }
 
-        var mainPartnerQualification = await _partnerQualificationCache.GetOrAddAsync(companyRawRecord.ResponsibleQualification,
-            async p => await services.PartnerQualificationRepository.GetByCode(companyRawRecord.ResponsibleQualification, cancellationToken));
+        var mainPartnerQualification = _partnerQualificationCache.GetValueOrDefault(companyRawRecord.ResponsibleQualification);
 
         var country = await _countryCache.GetOrAddAsync(establishmentRawRecord.CountryCode,
             async c => await services.CountryRepository.GetByCode(c, cancellationToken));
@@ -212,17 +303,55 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             companySpecialSituationID = companySpecialSituation.ID;
         }
 
-        var mainEconomicActivity = await _economicActivityCache.GetOrAddAsync(establishmentRawRecord.MainCnae, async e => await services.EconomicActivityRepository.GetByCode(e, cancellationToken));
+        var mainEconomicActivity = _economicActivityCache.GetValueOrDefault(establishmentRawRecord.MainCnae);
         if (mainEconomicActivity == null)
         {
             _logger.Warning("Unable to fetch the economic activity of the company.");
             return;
         }
 
+        Phone? phoneOne = null;
+        if (int.TryParse(establishmentRawRecord.Contact.PhoneAreaCode1, out int phoneAreaCode1) &&
+            int.TryParse(establishmentRawRecord.Contact.PhoneNumber1, out int phoneNumber1))
+            phoneOne = Phone.Create(_phoneIdGen.NextId(), phoneAreaCode1, phoneNumber1);
+
+        Phone? phoneTwo = null;
+        if (int.TryParse(establishmentRawRecord.Contact.PhoneAreaCode2, out int phoneAreaCode2) &&
+            int.TryParse(establishmentRawRecord.Contact.PhoneNumber2, out int phoneNumber2))
+            phoneTwo = Phone.Create(_phoneIdGen.NextId(), phoneAreaCode2, phoneNumber2);
+
+        int? faxAreaCode = null;
+        if (int.TryParse(establishmentRawRecord.Contact.FaxAreaCode, out var parsedFaxAreaCode))
+            faxAreaCode = parsedFaxAreaCode;
+
+        int? faxNumber = null;
+        if (int.TryParse(establishmentRawRecord.Contact.FaxNumber, out int parsedFaxNumber))
+            faxNumber = parsedFaxNumber;
+
+        List<Phone> phones = [];
+        List<Contact> contacts = [];
+        if (phoneOne != null)
+        {
+            phones.Add(phoneOne);
+            contacts.Add(Contact.Create(_contactIdGen.NextId(), phoneOne.ID, faxAreaCode, faxNumber, establishmentRawRecord.Contact.Email));
+        }
+        if (phoneTwo != null)
+        {
+            phones.Add(phoneTwo);
+            contacts.Add(Contact.Create(_contactIdGen.NextId(), phoneTwo.ID, faxAreaCode, faxNumber, establishmentRawRecord.Contact.Email));
+        }
+
+        long companyID = _companyIdGen.NextId();
+
+        CreateCompanySecondaryEconomicActivities(companyID, establishmentRawRecord.SecondaryCnaes);
+
+        List<CompanyContact> companyContacts = [];
+        companyContacts.AddRange(contacts.Select(c => CompanyContact.Create(companyID, c.ID)));
+
         string identifier = $"{establishmentRawRecord.BasicCnpj}{establishmentRawRecord.OrderCnpj}{establishmentRawRecord.CheckDigitCnpj}";
 
         var company = Company.Create(
-            _companyIdGen.NextId(),
+            companyID,
             legalNature.ID,
             mainPartnerQualification?.ID,
             (int)companyRawRecord.CompanySize!,
@@ -241,7 +370,87 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             establishmentRawRecord.StartActivityDate!.Value
         );
 
+        _phonesToInsert.AddRange(phones);
+        _contactsToInsert.AddRange(contacts);
+        _companyContactsToInsert.AddRange(companyContacts);
+
         _companiesToInsert.Add(company);
+        _companiesCache[company.Identifier] = company;
+    }
+
+    private async Task ProcessPartners(PartnerRawRecord partnerRawRecord, ServiceResolvers services, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        var company = _companiesCache
+            .First(c => c.Key.StartsWith(partnerRawRecord.BasicCnpj));
+
+        if (!long.TryParse(partnerRawRecord.RepresentativeQualification, out long representativeQualificationCode))
+        {
+            _logger.Error("Unable to parse representative qualification.");
+            return;
+        }
+
+        var legalRepresentativeQualification = await _partnerQualificationCache.GetOrAddAsync(representativeQualificationCode,
+            async p => await services.PartnerQualificationRepository.GetByCode(representativeQualificationCode, cancellationToken));
+        if (legalRepresentativeQualification == null)
+        {
+            _logger.Error("Unable to retreive representative qualification.");
+            return;
+        }
+
+        var legalRepresentative = LegalRepresentative.Create(_legalRepresentativeIdGen.NextId(), legalRepresentativeQualification.ID, partnerRawRecord.RepresentativeDocument, partnerRawRecord.RepresentativeName);
+        if (!long.TryParse(partnerRawRecord.PartnerQualification, out long partnerQualificationCode))
+        {
+            _logger.Error("Unable to parse representative qualification.");
+            return;
+        }
+
+        var partnerQualification = await _partnerQualificationCache.GetOrAddAsync(partnerQualificationCode,
+            async p => await services.PartnerQualificationRepository.GetByCode(partnerQualificationCode, cancellationToken));
+        if (partnerQualification == null)
+        {
+            _logger.Error("Unable to retreive partner qualification.");
+            return;
+        }
+
+        var country = await _countryCache.GetOrAddAsync(partnerRawRecord.CountryCode,
+            async c => await services.CountryRepository.GetByCode(c, cancellationToken));
+        long? countryID = country?.ID;
+
+        if (!Enum.TryParse(partnerRawRecord.AgeRange, out EAgeRanges ageRange))
+        {
+            _logger.Error("Unable to retreive partner age range.");
+            return;
+        }
+
+        var partner = Partner.Create(_partnerIdGen.NextId(), company.Value.ID, (int)partnerRawRecord.PartnerType, legalRepresentative.ID, partnerQualification.ID, partnerRawRecord.PartnerName, partnerRawRecord.PartnerDocument, partnerRawRecord.EntryDate!.Value, countryID, (int)ageRange);
+
+        _legalRepresentativesToInsert.Add(legalRepresentative);
+        _partnersToInsert.Add(partner);
+
+        return;
+    }
+
+    private void ProcessSimples(SimpleDataRawRecord simpleDataRawRecord, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        var company = _companiesCache
+            .First(c => c.Key.StartsWith(simpleDataRawRecord.BasicCnpj));
+
+        Mei? mei = null;
+        if (simpleDataRawRecord.OptInMei.HasValue && simpleDataRawRecord.OptInMei.Value)
+            mei = Mei.Create(_meiIdGen.NextId(), simpleDataRawRecord.MeiOptionDate, simpleDataRawRecord.MeiExclusionDate);
+
+        var simple = Simple.Create(_simpleIdGen.NextId(), company.Value.ID, mei?.ID, simpleDataRawRecord.OptInSimple, simpleDataRawRecord.SimpleOptionDate, simpleDataRawRecord.SimpleExclusionDate);
+
+        if (mei != null)
+            _meisToInsert.Add(mei);
+
+        _simplesToInsert.Add(simple);
     }
 
     private AddressType CreateAddressType(string streetType)
@@ -253,13 +462,12 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         return addressType;
     }
 
-    private async Task<Result<Address>> CreateAddress(ServiceResolvers services, int addressTypeID, EstablishmentRawRecord establishmentRawRecord, CancellationToken cancellationToken)
+    private Result<Address> CreateAddress(int addressTypeID, EstablishmentRawRecord establishmentRawRecord)
     {
         if (!long.TryParse(establishmentRawRecord.Address.MunicipalityCode, out var cityCode))
             return Result.Failure<Address>("Unable to parse MunicipalityCode");
 
-        var city = await _cityCache.GetOrAddAsync(cityCode, async c =>
-            await services.CityRepository.GetByCode(c, cancellationToken));
+        var city = _cityCache.GetValueOrDefault(cityCode);
         if (city == null)
             return Result.Failure<Address>("The city of the establishment could not be retreived.");
 
@@ -294,6 +502,27 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         _companySpecialSituationToInsert.Add(companySpecialSituation);
 
         return companySpecialSituation;
+    }
+
+    private void CreateCompanySecondaryEconomicActivities(long companyID, string secondaryCnaes)
+    {
+        List<CompanySecondaryEconomicActivity> companySecondaryEconomicActivities = [];
+        var economicActivitiesCodes = secondaryCnaes.Split(',');
+        foreach (var economicActivityCode in economicActivitiesCodes)
+        {
+            var economicActivity = _economicActivityCache.GetValueOrDefault(economicActivityCode);
+            if (economicActivity == null)
+                continue;
+
+            var companySecondaryEconomicActivity = CompanySecondaryEconomicActivity.Create(companyID, economicActivity.ID);
+
+            if (_companySecondaryEconomicActivityToInsert.Contains(companySecondaryEconomicActivity))
+                continue;
+
+            companySecondaryEconomicActivities.Add(companySecondaryEconomicActivity);
+        }
+
+        _companySecondaryEconomicActivityToInsert.AddRange(companySecondaryEconomicActivities);
     }
 
     private async Task PreloadCaches(CancellationToken cancellationToken)
@@ -428,7 +657,15 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             CompanySpecialSituationRepository = serviceProvider.GetRequiredService<ICompanySpecialSituationRepository>(),
             CityRepository = serviceProvider.GetRequiredService<ICityRepository>(),
             AddressTypeRepository = serviceProvider.GetRequiredService<IAddressTypeRepository>(),
-            AddressRepository = serviceProvider.GetRequiredService<IAddressRepository>()
+            AddressRepository = serviceProvider.GetRequiredService<IAddressRepository>(),
+            LegalRepresentativeRepository = serviceProvider.GetRequiredService<ILegalRepresentativeRepository>(),
+            PartnerRepository = serviceProvider.GetRequiredService<IPartnerRepository>(),
+            MeiRepository = serviceProvider.GetRequiredService<IMeiRepository>(),
+            SimpleRepository = serviceProvider.GetRequiredService<ISimpleRepository>(),
+            PhoneRepository = serviceProvider.GetRequiredService<IPhoneRepository>(),
+            ContactRepository = serviceProvider.GetRequiredService<IContactRepository>(),
+            CompanyContactRepository = serviceProvider.GetRequiredService<ICompanyContactRepository>(),
+            CompanySecondaryEconomicActivityRepository = serviceProvider.GetRequiredService<ICompanySecondaryEconomicActivityRepository>()
         };
     }
 
@@ -445,5 +682,13 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         public ICityRepository CityRepository { get; set; } = null!;
         public IAddressTypeRepository AddressTypeRepository { get; set; } = null!;
         public IAddressRepository AddressRepository { get; set; } = null!;
+        public ILegalRepresentativeRepository LegalRepresentativeRepository { get; set; } = null!;
+        public IPartnerRepository PartnerRepository { get; set; } = null!;
+        public IMeiRepository MeiRepository { get; set; } = null!;
+        public ISimpleRepository SimpleRepository { get; set; } = null!;
+        public IPhoneRepository PhoneRepository { get; set; } = null!;
+        public IContactRepository ContactRepository { get; set; } = null!;
+        public ICompanyContactRepository CompanyContactRepository { get; set; } = null!;
+        public ICompanySecondaryEconomicActivityRepository CompanySecondaryEconomicActivityRepository { get; set; } = null!;
     }
 }

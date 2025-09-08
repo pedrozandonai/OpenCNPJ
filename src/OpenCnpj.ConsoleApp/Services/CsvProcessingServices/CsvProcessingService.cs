@@ -5,7 +5,6 @@ using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Factory;
 using OpenCnpj.Core.Configurations;
-using OpenCnpj.Core.Constants;
 using Serilog;
 using System.Globalization;
 using System.Text;
@@ -81,7 +80,9 @@ public class CsvProcessingService(CsvStrategyFactory strategyFactory, IBatchServ
 
             logger.Information("Processing file {0} with strategy {1}", fileName, strategy.GetType().Name);
 
-            using var reader = new StreamReader(filePath, DetectEncoding(filePath));
+            Encoding governmentEncoding = Encoding.Latin1;
+
+            using var reader = new StreamReader(filePath, governmentEncoding);
             using var csv = new CsvReader(reader, config);
 
             var result = await strategy.ProcessAsync(batch, csv, fileName, cancellationToken);
@@ -114,13 +115,5 @@ public class CsvProcessingService(CsvStrategyFactory strategyFactory, IBatchServ
             DetectColumnCountChanges = false,
             Quote = '"',
         };
-    }
-
-    private Encoding DetectEncoding(string filePath)
-    {
-        using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        using var reader = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-        reader.Peek(); // força a detecção
-        return reader.CurrentEncoding;
     }
 }

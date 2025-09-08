@@ -18,7 +18,7 @@ public static class MongoIndexes
         var partnerQualifications = db.GetCollection<BsonDocument>("PartnerQualificationRawRecord");
         var partners = db.GetCollection<BsonDocument>("PartnersRaw");
         var reasons = db.GetCollection<BsonDocument>("ReasonRawRecord");
-        var simples = db.GetCollection<BsonDocument>("SimplesRawRecord");
+        var simples = db.GetCollection<BsonDocument>("SimplesDataRaw");
 
         var indexKeys = Builders<BsonDocument>.IndexKeys.Ascending("BasicCnpj");
 

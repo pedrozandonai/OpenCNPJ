@@ -44,7 +44,7 @@ public class InitialMigration : Migration
 
         InsertCompanyTypes();
 
-        Create.Table("parter_types")
+        Create.Table("partner_types")
             .WithColumn("id").AsInt32().PrimaryKey()
             .WithColumn("description").AsString().NotNullable();
 
@@ -101,8 +101,8 @@ public class InitialMigration : Migration
         Create.Table("contacts")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
             .WithColumn("phone_id").AsInt64().NotNullable()
-            .WithColumn("fax_area_code").AsInt32().NotNullable()
-            .WithColumn("fax_number").AsInt32().NotNullable()
+            .WithColumn("fax_area_code").AsInt32().Nullable()
+            .WithColumn("fax_number").AsInt32().Nullable()
             .WithColumn("email_address").AsString().Nullable();
             
         Create.Table("addresses")
@@ -118,18 +118,18 @@ public class InitialMigration : Migration
 
         CreateCompanies();
 
-        Create.Table("mei")
+        Create.Table("meis")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("date_opted").AsDate().Nullable()
-            .WithColumn("exclusion_date").AsDate().Nullable();
+            .WithColumn("date_opted").AsDateTime().Nullable()
+            .WithColumn("exclusion_date").AsDateTime().Nullable();
 
         Create.Table("simples")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
             .WithColumn("company_id").AsInt64().NotNullable()
             .WithColumn("mei_id").AsInt64().Nullable()
             .WithColumn("is_simple").AsBoolean().Nullable()
-            .WithColumn("date_opted").AsDate().Nullable()
-            .WithColumn("exclusion_date").AsDate().Nullable();
+            .WithColumn("date_opted").AsDateTime().Nullable()
+            .WithColumn("exclusion_date").AsDateTime().Nullable();
 
         Create.Table("company_contacts")
             .WithColumn("company_id").AsInt64().NotNullable()
@@ -139,11 +139,60 @@ public class InitialMigration : Migration
             .WithColumn("company_id").AsInt64().NotNullable()
             .WithColumn("economic_activity_id").AsInt64().NotNullable();
 
+        Create.Table("legal_representatives")
+            .WithColumn("id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("qualification_id").AsInt64().NotNullable()
+            .WithColumn("identifier").AsString().NotNullable()
+            .WithColumn("name").AsString().NotNullable();
+
         Create.Table("partners")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("partner_type_id").AsInt32().NotNullable();
+            .WithColumn("company_id").AsInt64().NotNullable()
+            .WithColumn("country_id").AsInt64().Nullable()
+            .WithColumn("partner_type_id").AsInt32().NotNullable()
+            .WithColumn("legal_representative_id").AsInt64().Nullable()
+            .WithColumn("qualification_id").AsInt64().NotNullable()
+            .WithColumn("age_range_id").AsInt32().NotNullable()
+            .WithColumn("name").AsString().NotNullable()
+            .WithColumn("identifier").AsString().Nullable()
+            .WithColumn("start_date").AsDateTime().NotNullable();
 
         // FOREIGN KEYS
+
+        Create.ForeignKey("FK_legal_representatives_partner_qualifications")
+            .FromTable("legal_representatives").ForeignColumn("qualification_id")
+            .ToTable("partner_qualifications").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_partners_companies")
+            .FromTable("partners").ForeignColumn("company_id")
+            .ToTable("companies").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_partners_countries")
+            .FromTable("partners").ForeignColumn("country_id")
+            .ToTable("countries").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_partners_partners_types")
+            .FromTable("partners").ForeignColumn("partner_type_id")
+            .ToTable("partner_types").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_partners_legal_representatives")
+            .FromTable("partners").ForeignColumn("legal_representative_id")
+            .ToTable("legal_representatives").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_partners_partner_qualifications")
+            .FromTable("partners").ForeignColumn("qualification_id")
+            .ToTable("partner_qualifications").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.ForeignKey("FK_partners_age_ranges")
+            .FromTable("partners").ForeignColumn("age_range_id")
+            .ToTable("age_ranges").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_batch_files_file_statuses")
             .FromTable("batch_files").ForeignColumn("file_status_id")
@@ -167,17 +216,17 @@ public class InitialMigration : Migration
 
         Create.ForeignKey("FK_simples_company")
             .FromTable("simples").ForeignColumn("company_id")
-            .ToTable("company").PrimaryColumn("id")
+            .ToTable("companies").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_simples_mei")
             .FromTable("simples").ForeignColumn("mei_id")
-            .ToTable("mei").PrimaryColumn("id")
+            .ToTable("meis").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.SetNull);
 
         Create.ForeignKey("FK_company_contacts_company")
             .FromTable("company_contacts").ForeignColumn("company_id")
-            .ToTable("company").PrimaryColumn("id")
+            .ToTable("companies").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_contacts_contacts")
@@ -187,7 +236,7 @@ public class InitialMigration : Migration
 
         Create.ForeignKey("FK_company_secondary_economic_activities_company")
             .FromTable("company_secondary_economic_activities").ForeignColumn("company_id")
-            .ToTable("company").PrimaryColumn("id")
+            .ToTable("companies").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_secondary_economic_activities_economic_activities")
@@ -197,7 +246,7 @@ public class InitialMigration : Migration
 
         Create.ForeignKey("FK_partners_parter_types")
             .FromTable("partners").ForeignColumn("partner_type_id")
-            .ToTable("parter_types").PrimaryColumn("id")
+            .ToTable("partner_types").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_special_situations_special_situations")
@@ -209,41 +258,48 @@ public class InitialMigration : Migration
             .OnTable("company_contacts")
             .Columns("company_id", "contact_id");
 
-        Create.PrimaryKey("PK_company_secondary_economic_activities")
-            .OnTable("company_secondary_economic_activities")
-            .Columns("company_id", "economic_activity_id");
+        //Create.PrimaryKey("PK_company_secondary_economic_activities")
+        //    .OnTable("company_secondary_economic_activities")
+        //    .Columns("company_id", "economic_activity_id");
     }
 
     public override void Down()
     {
         // Remover foreign keys primeiro
-        Delete.ForeignKey("FK_partners_parter_types").OnTable("partners");
+        Delete.ForeignKey("FK_legal_representatives_partner_qualifications").OnTable("legal_representatives");
+        Delete.ForeignKey("FK_partners_companies").OnTable("partners");
+        Delete.ForeignKey("FK_partners_countries").OnTable("partners");
+        Delete.ForeignKey("FK_partners_partners_types").OnTable("partners");
+        Delete.ForeignKey("FK_partners_legal_representatives").OnTable("partners");
+        Delete.ForeignKey("FK_partners_partner_qualifications").OnTable("partners");
+        Delete.ForeignKey("FK_partners_age_ranges").OnTable("partners");
         Delete.ForeignKey("FK_company_secondary_economic_activities_economic_activities").OnTable("company_secondary_economic_activities");
         Delete.ForeignKey("FK_company_secondary_economic_activities_company").OnTable("company_secondary_economic_activities");
         Delete.ForeignKey("FK_company_contacts_contacts").OnTable("company_contacts");
         Delete.ForeignKey("FK_company_contacts_company").OnTable("company_contacts");
         Delete.ForeignKey("FK_simples_mei").OnTable("simples");
         Delete.ForeignKey("FK_simples_company").OnTable("simples");
-        Delete.ForeignKey("FK_company_special_situations").OnTable("company");
-        Delete.ForeignKey("FK_company_economic_activities").OnTable("company");
-        Delete.ForeignKey("FK_company_addresses").OnTable("company");
-        Delete.ForeignKey("FK_company_countries").OnTable("company");
-        Delete.ForeignKey("FK_company_reasons").OnTable("company");
-        Delete.ForeignKey("FK_company_company_types").OnTable("company");
-        Delete.ForeignKey("FK_company_company_sizes").OnTable("company");
-        Delete.ForeignKey("FK_company_partner_qualifications").OnTable("company");
-        Delete.ForeignKey("FK_company_legal_natures").OnTable("company");
+        Delete.ForeignKey("FK_company_special_situations").OnTable("companies");
+        Delete.ForeignKey("FK_company_economic_activities").OnTable("companies");
+        Delete.ForeignKey("FK_company_addresses").OnTable("companies");
+        Delete.ForeignKey("FK_company_countries").OnTable("companies");
+        Delete.ForeignKey("FK_company_reasons").OnTable("companies");
+        Delete.ForeignKey("FK_company_company_types").OnTable("companies");
+        Delete.ForeignKey("FK_company_company_sizes").OnTable("companies");
+        Delete.ForeignKey("FK_company_partner_qualifications").OnTable("companies");
+        Delete.ForeignKey("FK_company_legal_natures").OnTable("companies");
         Delete.ForeignKey("FK_addresses_cities").OnTable("addresses");
         Delete.ForeignKey("FK_addresses_address_types").OnTable("addresses");
         Delete.ForeignKey("FK_contacts_phones").OnTable("contacts");
 
         // Remover tabelas
         Delete.Table("partners").IfExists();
+        Delete.Table("legal_representatives").IfExists();
         Delete.Table("company_secondary_economic_activities").IfExists();
         Delete.Table("company_contacts").IfExists();
         Delete.Table("simples").IfExists();
         Delete.Table("mei").IfExists();
-        Delete.Table("company").IfExists();
+        Delete.Table("companies").IfExists();
         Delete.Table("addresses").IfExists();
         Delete.Table("contacts").IfExists();
         Delete.Table("phones").IfExists();
@@ -256,7 +312,7 @@ public class InitialMigration : Migration
         Delete.Table("partner_qualifications").IfExists();
         Delete.Table("cities").IfExists();
         Delete.Table("countries").IfExists();
-        Delete.Table("parter_types").IfExists();
+        Delete.Table("partner_types").IfExists();
         Delete.Table("company_types").IfExists();
         Delete.Table("company_situations").IfExists();
         Delete.Table("company_sizes").IfExists();
@@ -266,7 +322,7 @@ public class InitialMigration : Migration
 
     public void CreateCompanies()
     {
-        Create.Table("company")
+        Create.Table("companies")
             .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("legal_nature_id").AsInt64().NotNullable()
             .WithColumn("main_partner_qualification_id").AsInt64().Nullable()
@@ -288,44 +344,46 @@ public class InitialMigration : Migration
         //FK's
 
         Create.ForeignKey("FK_company_legal_natures")
-            .FromTable("company").ForeignColumn("legal_nature_id")
+            .FromTable("companies").ForeignColumn("legal_nature_id")
             .ToTable("legal_natures").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_partner_qualifications")
-            .FromTable("company").ForeignColumn("main_partner_qualification_id")
+            .FromTable("companies").ForeignColumn("main_partner_qualification_id")
             .ToTable("partner_qualifications").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_company_sizes")
-            .FromTable("company").ForeignColumn("company_size_id")
+            .FromTable("companies").ForeignColumn("company_size_id")
             .ToTable("company_sizes").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_company_types")
-            .FromTable("company").ForeignColumn("company_type_id")
+            .FromTable("companies").ForeignColumn("company_type_id")
             .ToTable("company_types").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_countries")
-            .FromTable("company").ForeignColumn("country_id")
+            .FromTable("companies").ForeignColumn("country_id")
             .ToTable("countries").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_addresses")
-            .FromTable("company").ForeignColumn("address_id")
+            .FromTable("companies").ForeignColumn("address_id")
             .ToTable("addresses").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_economic_activities")
-            .FromTable("company").ForeignColumn("main_economic_activity_id")
+            .FromTable("companies").ForeignColumn("main_economic_activity_id")
             .ToTable("economic_activities").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.ForeignKey("FK_company_special_situations")
-            .FromTable("company").ForeignColumn("company_special_situation_id")
+            .FromTable("companies").ForeignColumn("company_special_situation_id")
             .ToTable("company_special_situations").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+        Create.Index("PK_company_identifier").OnTable("companies").OnColumn("identifier").Unique();
     }
 
     private void CreateApplicationSteps()
@@ -407,8 +465,8 @@ public class InitialMigration : Migration
 
     private void InsertParterTypes()
     {
-        Insert.IntoTable("parter_types").Row(new { id = 1, description = "PESSOA JURÍCIDA" });
-        Insert.IntoTable("parter_types").Row(new { id = 2, description = "PESSOA FÍSICA" });
-        Insert.IntoTable("parter_types").Row(new { id = 3, description = "ESTRANGEIRO" });
+        Insert.IntoTable("partner_types").Row(new { id = 1, description = "PESSOA JURÍCIDA" });
+        Insert.IntoTable("partner_types").Row(new { id = 2, description = "PESSOA FÍSICA" });
+        Insert.IntoTable("partner_types").Row(new { id = 3, description = "ESTRANGEIRO" });
     }
 }

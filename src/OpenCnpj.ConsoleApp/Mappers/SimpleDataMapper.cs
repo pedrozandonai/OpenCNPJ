@@ -19,15 +19,15 @@ public class SimpleDataMapper : ClassMap<SimpleDataRawRecord>
         });
         Map(s => s.SimpleOptionDate).Index(2).Convert(c =>
         {
-            var val = c.Row.GetField(6);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            var val = c.Row.GetField(2);
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
         });
         Map(s => s.SimpleExclusionDate).Index(3).Convert(c =>
         {
             var val = c.Row.GetField(3);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
         });
@@ -43,14 +43,14 @@ public class SimpleDataMapper : ClassMap<SimpleDataRawRecord>
         Map(s => s.MeiOptionDate).Index(5).Convert(c =>
         {
             var val = c.Row.GetField(5);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
         });
         Map(s => s.MeiExclusionDate).Index(6).Convert(c =>
         {
             var val = c.Row.GetField(6);
-            if (DateOnly.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(val, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             return null;
         });

@@ -11,7 +11,7 @@ public class PartnerRawRecord
     public string PartnerName { get; set; }
     public string PartnerDocument { get; set; } // CPF or CNPJ
     public string PartnerQualification { get; set; }
-    public DateOnly? EntryDate { get; set; }
+    public DateTime? EntryDate { get; set; }
     public string CountryCode { get; set; }
     public string RepresentativeDocument { get; set; }
     public string RepresentativeName { get; set; }
