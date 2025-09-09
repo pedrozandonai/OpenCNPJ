@@ -1,10 +1,11 @@
 ﻿using Dapper;
-using Npgsql;
 using OpenCnpj.Application.Addresses.Domain;
+using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
+using OpenCnpj.Core.Database.Services;
 
 namespace OpenCnpj.Application.Addresses.Repositories;
-public class AddressRepository(IDatabaseFactory databaseFactory) : IAddressRepository
+public class AddressRepository(IDatabaseFactory databaseFactory, IPgBulkCopyService bulk, TweakSettings tweakSettings) : IAddressRepository
 {
     public IDatabaseFactory DatabaseFactory => databaseFactory;
 
@@ -60,47 +61,5 @@ public class AddressRepository(IDatabaseFactory databaseFactory) : IAddressRepos
     }
 
     public async Task CopyToTable(IEnumerable<Address> addresses, CancellationToken cancellationToken)
-    {
-        if (DatabaseFactory.Connection is not NpgsqlConnection npgsqlConn)
-            throw new InvalidOperationException("Database connection must be NpgsqlConnection for COPY.");
-
-        using var writer = await npgsqlConn.BeginBinaryImportAsync(@"
-        COPY addresses (id,
-                        address_type_id,
-                        city_id,
-                        street, 
-                        number,
-                        complement,
-                        neighborhood,
-                        zip_code,
-                        federal_unit)
-        FROM STDIN (FORMAT BINARY)", cancellationToken);
-
-        var rowCount = 0;
-        foreach (var address in addresses)
-        {
-            try
-            {
-                rowCount++;
-                cancellationToken.ThrowIfCancellationRequested();
-                await writer.StartRowAsync(cancellationToken);
-
-                await writer.WriteAsync(address.ID, NpgsqlTypes.NpgsqlDbType.Bigint, cancellationToken);
-                await writer.WriteAsync(address.AddressTypeID, NpgsqlTypes.NpgsqlDbType.Bigint, cancellationToken);
-                await writer.WriteAsync(address.CityID, NpgsqlTypes.NpgsqlDbType.Bigint, cancellationToken);
-                await writer.WriteAsync(address.Street, NpgsqlTypes.NpgsqlDbType.Text, cancellationToken);
-                await writer.WriteAsync(address.Number ?? (object)DBNull.Value, NpgsqlTypes.NpgsqlDbType.Integer, cancellationToken);
-                await writer.WriteAsync(address.Complement ?? (object)DBNull.Value, NpgsqlTypes.NpgsqlDbType.Text, cancellationToken);
-                await writer.WriteAsync(address.Neightborhood, NpgsqlTypes.NpgsqlDbType.Text, cancellationToken);
-                await writer.WriteAsync(address.ZipCode ?? (object)DBNull.Value, NpgsqlTypes.NpgsqlDbType.Integer, cancellationToken);
-                await writer.WriteAsync(address.FederalUnit, NpgsqlTypes.NpgsqlDbType.Text, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Error processing company at row {rowCount}, ID: {address.ID}", ex);
-            }
-        }
-
-        await writer.CompleteAsync(cancellationToken);
-    }
+        => await bulk.CopyAsync(databaseFactory.ConnectionString, addresses, tweakSettings.FormatRawDataSettings.RecordsBatchAmount, cancellationToken);
 }

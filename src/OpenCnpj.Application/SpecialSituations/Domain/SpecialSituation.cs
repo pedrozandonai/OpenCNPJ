@@ -1,27 +1,22 @@
-﻿using CSharpFunctionalExtensions;
+﻿using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.SpecialSituations.Domain;
+
+[PgTable("special_situations")]
 public class SpecialSituation
 {
-    public int ID { get; private set; }
+    [PgColumn("id")]
+    public long ID { get; private set; }
+
+    [PgColumn("description")]
     public string Description { get; private set; }
 
-    public SpecialSituation(int id, string description)
+    public SpecialSituation(long id, string description)
     {
         ID = id;
         Description = description;
     }
 
-    public static SpecialSituation Create(int id, string description)
+    public static SpecialSituation Create(long id, string description)
         => new (id, description);
-
-    public Result SetID(int id)
-    {
-        if (ID != 0)
-            return Result.Failure("The ID for the record 'SpecialSituation' already has been set.");
-
-        ID = id;
-
-        return Result.Success();
-    }
 }

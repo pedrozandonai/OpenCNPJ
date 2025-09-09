@@ -51,6 +51,7 @@ using System.Collections.Concurrent;
 namespace OpenCnpj.Application.Companies.Services;
 public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IServiceProvider serviceProvider, TweakSettings tweakSettings, ILogger logger) : ICompanyService
 {
+    private readonly ConcurrentHashSet<(long CompanyId, long EconomicActivityId)> _secondaryActivityKeys = new();
     private readonly ConcurrentDictionary<string, LegalNature?> _legalNatureCache = new();
     private readonly ConcurrentDictionary<long, PartnerQualification?> _partnerQualificationCache = new();
     private readonly ConcurrentDictionary<string, Country?> _countryCache = new();
@@ -71,19 +72,19 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
     private readonly IdGenerator _phoneIdGen = new();
     private readonly IdGenerator _contactIdGen = new();
 
-    private readonly List<Company> _companiesToInsert = [];
-    private readonly List<AddressType> _addressTypesToInsert = [];
-    private readonly List<Address> _addressessToInsert = [];
-    private readonly List<SpecialSituation> _specialSituationsToInsert = [];
-    private readonly List<CompanySpecialSituation> _companySpecialSituationToInsert = [];
-    private readonly List<Partner> _partnersToInsert = [];
-    private readonly List<LegalRepresentative> _legalRepresentativesToInsert = [];
-    private readonly List<Simple> _simplesToInsert = [];
-    private readonly List<Mei> _meisToInsert = [];
-    private readonly List<Phone> _phonesToInsert = [];
-    private readonly List<Contact> _contactsToInsert = [];
-    private readonly List<CompanyContact> _companyContactsToInsert = [];
-    private readonly List<CompanySecondaryEconomicActivity> _companySecondaryEconomicActivityToInsert = [];
+    private readonly ConcurrentBag<Company> _companiesToInsert = [];
+    private readonly ConcurrentBag<AddressType> _addressTypesToInsert = [];
+    private readonly ConcurrentBag<Address> _addressessToInsert = [];
+    private readonly ConcurrentBag<SpecialSituation> _specialSituationsToInsert = [];
+    private readonly ConcurrentBag<CompanySpecialSituation> _companySpecialSituationToInsert = [];
+    private readonly ConcurrentBag<Partner> _partnersToInsert = [];
+    private readonly ConcurrentBag<LegalRepresentative> _legalRepresentativesToInsert = [];
+    private readonly ConcurrentBag<Simple> _simplesToInsert = [];
+    private readonly ConcurrentBag<Mei> _meisToInsert = [];
+    private readonly ConcurrentBag<Phone> _phonesToInsert = [];
+    private readonly ConcurrentBag<Contact> _contactsToInsert = [];
+    private readonly ConcurrentBag<CompanyContact> _companyContactsToInsert = [];
+    private readonly ConcurrentBag<CompanySecondaryEconomicActivity> _companySecondaryEconomicActivityToInsert = [];
 
     private readonly ILogger _logger = logger.ForContext<CompanyService>();
     public async Task<Result> CreateCompanies(CancellationToken cancellationToken)
@@ -95,6 +96,9 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             var page = 0;
 
             await PreloadCaches(cancellationToken);
+
+            var semaphoreSlim = new SemaphoreSlim(tweakSettings.FormatRawDataSettings.AmountAtTheSameTime);
+            var allPages = new List<Task<List<object>>>(); // cada página vai retornar coleções para inserir
 
             while (true)
             {
@@ -123,121 +127,121 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
                 using var cursor = await pipeline.ToCursorAsync(cancellationToken);
                 var anyInPage = false;
-                var companyTasks = new List<Task>();
 
+                var companyBatch = new List<Task>();
                 while (await cursor.MoveNextAsync(cancellationToken))
                 {
                     foreach (var companyWithEstablishments in cursor.Current)
                     {
                         anyInPage = true;
+                        await semaphoreSlim.WaitAsync(cancellationToken);
 
-                        companyTasks.Add(ProcessCompany(companyWithEstablishments, cancellationToken));
+                        var task = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await ProcessCompany(companyWithEstablishments, cancellationToken);
+                            }
+                            finally
+                            {
+                                semaphoreSlim.Release();
+                            }
+                        }, cancellationToken);
+
+                        companyBatch.Add(task);
                     }
                 }
+
+                if (!anyInPage)
+                    break;
+
+                await Task.WhenAll(companyBatch);
 
                 using var scope = serviceProvider.CreateAsyncScope();
                 var dbFactory = scope.ServiceProvider.GetRequiredService<IDatabaseFactory>();
                 var services = ResolveServices(scope.ServiceProvider);
 
-                await Task.WhenAll(companyTasks);
-
-                await dbFactory.BeginAsync();
+                //await dbFactory.BeginAsync();
 
                 if (_addressTypesToInsert.Count > 0)
                 {
-                    await services.AddressTypeRepository.Insert(_addressTypesToInsert, cancellationToken);
-
+                    await services.AddressTypeRepository.CopyToTable(_addressTypesToInsert, cancellationToken);
                     _addressTypesToInsert.Clear();
                 }
 
                 if (_addressessToInsert.Count > 0)
                 {
                     await services.AddressRepository.CopyToTable(_addressessToInsert, cancellationToken);
-
                     _addressessToInsert.Clear();
                 }
-                    
+
                 if (_specialSituationsToInsert.Count > 0)
                 {
-                    await services.SpecialSituationRepository.Insert(_specialSituationsToInsert, cancellationToken);
-
+                    await services.SpecialSituationRepository.CopyToTable(_specialSituationsToInsert, cancellationToken);
                     _specialSituationsToInsert.Clear();
-                }
-
-                if (_companySpecialSituationToInsert.Count > 0)
-                {
-                    await services.CompanySpecialSituationRepository.Insert(_companySpecialSituationToInsert, cancellationToken);
-
-                    _companySpecialSituationToInsert.Clear();
                 }
 
                 if (_companiesToInsert.Count > 0)
                 {
                     await services.CompanyRepository.CopyToTable(_companiesToInsert, cancellationToken);
-
                     _companiesToInsert.Clear();
+                }
+
+                if (_companySpecialSituationToInsert.Count > 0)
+                {
+                    await services.CompanySpecialSituationRepository.CopyToTable(_companySpecialSituationToInsert, cancellationToken);
+                    _companySpecialSituationToInsert.Clear();
                 }
 
                 if (_phonesToInsert.Count > 0)
                 {
                     await services.PhoneRepository.CopyToTable(_phonesToInsert, cancellationToken);
-
                     _phonesToInsert.Clear();
                 }
 
                 if (_contactsToInsert.Count > 0)
                 {
                     await services.ContactRepository.CopyToTable(_contactsToInsert, cancellationToken);
-
                     _contactsToInsert.Clear();
                 }
 
                 if (_companyContactsToInsert.Count > 0)
                 {
                     await services.CompanyContactRepository.CopyToTable(_companyContactsToInsert, cancellationToken);
-
                     _companyContactsToInsert.Clear();
                 }
 
                 if (_legalRepresentativesToInsert.Count > 0)
                 {
                     await services.LegalRepresentativeRepository.CopyToTable(_legalRepresentativesToInsert, cancellationToken);
-
                     _legalRepresentativesToInsert.Clear();
                 }
 
                 if (_partnersToInsert.Count > 0)
                 {
                     await services.PartnerRepository.CopyToTable(_partnersToInsert, cancellationToken);
-
                     _partnersToInsert.Clear();
                 }
 
                 if (_meisToInsert.Count > 0)
                 {
                     await services.MeiRepository.CopyToTable(_meisToInsert, cancellationToken);
-
                     _meisToInsert.Clear();
                 }
 
                 if (_simplesToInsert.Count > 0)
                 {
                     await services.SimpleRepository.CopyToTable(_simplesToInsert, cancellationToken);
-
                     _simplesToInsert.Clear();
                 }
 
                 if (_companySecondaryEconomicActivityToInsert.Count > 0)
                 {
                     await services.CompanySecondaryEconomicActivityRepository.CopyToTable(_companySecondaryEconomicActivityToInsert, cancellationToken);
-
                     _companySecondaryEconomicActivityToInsert.Clear();
                 }
 
-                await dbFactory.CommitAsync();
-
-                if (!anyInPage)
-                    break;
+                //await dbFactory.CommitAsync();
 
                 page++;
             }
@@ -293,14 +297,13 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
         var country = await _countryCache.GetOrAddAsync(establishmentRawRecord.CountryCode,
             async c => await services.CountryRepository.GetByCode(c, cancellationToken));
 
-        int? companySpecialSituationID = null;
+        long companyID = _companyIdGen.NextId();
+
         if (!string.IsNullOrEmpty(establishmentRawRecord.SpecialStatus))
         {
             var specialSituation = _specialSituationCache.GetOrAdd(establishmentRawRecord.SpecialStatus, CreateSpecialSituation);
 
-            var companySpecialSituation = CreateCompanySpecialSituation(specialSituation!.ID, establishmentRawRecord.SpecialStatusDate!.Value);
-
-            companySpecialSituationID = companySpecialSituation.ID;
+            CreateCompanySpecialSituation(specialSituation!.ID, companyID, establishmentRawRecord.SpecialStatusDate!.Value);
         }
 
         var mainEconomicActivity = _economicActivityCache.GetValueOrDefault(establishmentRawRecord.MainCnae);
@@ -341,8 +344,6 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             contacts.Add(Contact.Create(_contactIdGen.NextId(), phoneTwo.ID, faxAreaCode, faxNumber, establishmentRawRecord.Contact.Email));
         }
 
-        long companyID = _companyIdGen.NextId();
-
         CreateCompanySecondaryEconomicActivities(companyID, establishmentRawRecord.SecondaryCnaes);
 
         List<CompanyContact> companyContacts = [];
@@ -358,7 +359,6 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             (int)establishmentRawRecord.HeadOfficeOrBranch,
             country?.ID,
             addressCreateResult.Value.ID,
-            companySpecialSituationID,
             mainEconomicActivity.ID,
             identifier,
             companyRawRecord.CorporateName,
@@ -455,14 +455,14 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
     private AddressType CreateAddressType(string streetType)
     {
-        var addressType = AddressType.Create((int)_addressTypeIdGen.NextId(), streetType);
+        var addressType = AddressType.Create(_addressTypeIdGen.NextId(), streetType);
 
         _addressTypesToInsert.Add(addressType);
 
         return addressType;
     }
 
-    private Result<Address> CreateAddress(int addressTypeID, EstablishmentRawRecord establishmentRawRecord)
+    private Result<Address> CreateAddress(long addressTypeID, EstablishmentRawRecord establishmentRawRecord)
     {
         if (!long.TryParse(establishmentRawRecord.Address.MunicipalityCode, out var cityCode))
             return Result.Failure<Address>("Unable to parse MunicipalityCode");
@@ -488,25 +488,22 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
 
     private SpecialSituation CreateSpecialSituation(string specialSituationDescription)
     {
-        var specialSituation = SpecialSituation.Create((int)_specialSituationIdGen.NextId(), specialSituationDescription);
+        var specialSituation = SpecialSituation.Create(_specialSituationIdGen.NextId(), specialSituationDescription);
 
         _specialSituationsToInsert.Add(specialSituation);
 
         return specialSituation;
     }
 
-    private CompanySpecialSituation CreateCompanySpecialSituation(int specialSituationID, DateTime specialStatusDate)
+    private void CreateCompanySpecialSituation(long specialSituationID, long companyID, DateTime specialStatusDate)
     {
-        var companySpecialSituation = CompanySpecialSituation.Create((int)_companySpecialSituationIdGen.NextId(), specialSituationID, specialStatusDate);
+        var companySpecialSituation = CompanySpecialSituation.Create(_companySpecialSituationIdGen.NextId(), companyID, specialSituationID, specialStatusDate);
 
         _companySpecialSituationToInsert.Add(companySpecialSituation);
-
-        return companySpecialSituation;
     }
 
     private void CreateCompanySecondaryEconomicActivities(long companyID, string secondaryCnaes)
     {
-        List<CompanySecondaryEconomicActivity> companySecondaryEconomicActivities = [];
         var economicActivitiesCodes = secondaryCnaes.Split(',');
         foreach (var economicActivityCode in economicActivitiesCodes)
         {
@@ -514,15 +511,14 @@ public class CompanyService(IMongoDatabaseFactory mongoDatabaseFactory, IService
             if (economicActivity == null)
                 continue;
 
-            var companySecondaryEconomicActivity = CompanySecondaryEconomicActivity.Create(companyID, economicActivity.ID);
+            var key = (companyID, economicActivity.ID);
 
-            if (_companySecondaryEconomicActivityToInsert.Contains(companySecondaryEconomicActivity))
-                continue;
-
-            companySecondaryEconomicActivities.Add(companySecondaryEconomicActivity);
+            if (_secondaryActivityKeys.Add(key))
+            {
+                var companySecondaryEconomicActivity = CompanySecondaryEconomicActivity.Create(companyID, economicActivity.ID);
+                _companySecondaryEconomicActivityToInsert.Add(companySecondaryEconomicActivity);
+            }
         }
-
-        _companySecondaryEconomicActivityToInsert.AddRange(companySecondaryEconomicActivities);
     }
 
     private async Task PreloadCaches(CancellationToken cancellationToken)

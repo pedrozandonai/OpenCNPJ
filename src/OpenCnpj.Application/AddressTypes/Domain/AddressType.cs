@@ -1,20 +1,24 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.Application.BaseRecords.Abstractions;
+using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.AddressTypes.Domain;
-public class AddressType : BaseRecord
+
+[PgTable("address_types")]
+public class AddressType
 {
-    private AddressType(int id, string description)
-        : base(id, description)
+    [PgColumn("id", 1)]
+    public long ID { get; private set; }
+
+    [PgColumn("description", 2)]
+    public string Description { get; private set; }
+
+    private AddressType(long id, string description)
     {
+        ID = id;
+        Description = description;
     }
 
-    private AddressType()
-        : base()
-    {
-    }
-
-    public static AddressType Create(int id, string description)
+    public static AddressType Create(long id, string description)
         => new(id, description);
 
     public Result SetID(int id)

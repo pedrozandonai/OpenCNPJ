@@ -1,29 +1,30 @@
-﻿using CSharpFunctionalExtensions;
+﻿using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.CompanySpecialSituations.Domain;
+
+[PgTable("company_special_situations")]
 public class CompanySpecialSituation
 {
-    public int ID { get; set; }
-    public int SpecialSituationID { get; set; }
+    [PgColumn("id", 1)]
+    public long ID { get; set; }
+
+    [PgColumn("company_id", 2)]
+    public long CompanyID { get; set; }
+
+    [PgColumn("special_situation_id", 3)]
+    public long SpecialSituationID { get; set; }
+
+    [PgColumn("start_date", 4)]
     public DateTime StartDate { get; set; }
 
-    public CompanySpecialSituation(int iD, int specialSituationID, DateTime startDate)
+    private CompanySpecialSituation(long id, long companyID, long specialSituationID, DateTime startDate)
     {
-        ID = iD;
-        SpecialSituationID = specialSituationID;
-        StartDate = startDate;
-    }
-
-    public static CompanySpecialSituation Create(int id, int specialSituationID, DateTime startDate)
-    => new(id, specialSituationID, startDate);
-
-    public Result SetID(int id)
-    {
-        if (ID != 0)
-            return Result.Failure("The ID for the record 'CompanySpecialSituation' already has been set.");
-
         ID = id;
-
-        return Result.Success();
+        CompanyID = companyID;
+        SpecialSituationID = specialSituationID;
+        StartDate = startDate.ToLocalTime();
     }
+
+    public static CompanySpecialSituation Create(long id, long companyID, long specialSituationID, DateTime startDate)
+        => new(id, companyID, specialSituationID, startDate);
 }

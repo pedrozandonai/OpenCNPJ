@@ -1,9 +1,11 @@
 ﻿using Dapper;
 using OpenCnpj.Application.CompanySpecialSituations.Domain;
+using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
+using OpenCnpj.Core.Database.Services;
 
 namespace OpenCnpj.Application.CompanySpecialSituations.Repositories;
-public class CompanySpecialSituationRepository(IDatabaseFactory databaseFactory) : ICompanySpecialSituationRepository
+public class CompanySpecialSituationRepository(IDatabaseFactory databaseFactory, IPgBulkCopyService bulk, TweakSettings tweakSettings) : ICompanySpecialSituationRepository
 {
     public IDatabaseFactory DatabaseFactory => databaseFactory;
 
@@ -33,4 +35,7 @@ public class CompanySpecialSituationRepository(IDatabaseFactory databaseFactory)
 
         await DatabaseFactory.Connection.ExecuteAsync(command);
     }
+
+    public async Task CopyToTable(IEnumerable<CompanySpecialSituation> companySpecialSituations, CancellationToken cancellationToken)
+        => await bulk.CopyAsync(databaseFactory.ConnectionString, companySpecialSituations, tweakSettings.FormatRawDataSettings.RecordsBatchAmount, cancellationToken);
 }

@@ -1,11 +1,16 @@
 ﻿using Dapper;
 using OpenCnpj.Application.AddressTypes.Domain;
+using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
+using OpenCnpj.Core.Database.Services;
 
 namespace OpenCnpj.Application.AddressTypes.Repositories;
-public class AddressTypeRepository(IDatabaseFactory databaseFactory) : IAddressTypeRepository
+public class AddressTypeRepository(IDatabaseFactory databaseFactory, IPgBulkCopyService bulk, TweakSettings tweakSettings) : IAddressTypeRepository
 {
     public IDatabaseFactory DatabaseFactory => databaseFactory;
+
+    public async Task CopyToTable(IEnumerable<AddressType> addressTypes, CancellationToken cancellationToken)
+        => await bulk.CopyAsync(databaseFactory.ConnectionString, addressTypes, tweakSettings.FormatRawDataSettings.RecordsBatchAmount, cancellationToken);
 
     public async Task<int> Insert(AddressType addressType, CancellationToken cancellationToken)
     {

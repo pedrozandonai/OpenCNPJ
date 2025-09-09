@@ -81,13 +81,8 @@ public class InitialMigration : Migration
             .WithColumn("description").AsString().NotNullable();
 
         Create.Table("special_situations")
-            .WithColumn("id").AsInt32().PrimaryKey()
+            .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("description").AsString().NotNullable();
-
-        Create.Table("company_special_situations")
-            .WithColumn("id").AsInt32().PrimaryKey()
-            .WithColumn("special_situation_id").AsInt32().NotNullable()
-            .WithColumn("start_date").AsDate().NotNullable();
 
         Create.Table("address_types")
             .WithColumn("id").AsInt64().PrimaryKey()
@@ -117,6 +112,12 @@ public class InitialMigration : Migration
             .WithColumn("federal_unit").AsString().NotNullable();
 
         CreateCompanies();
+
+        Create.Table("company_special_situations")
+            .WithColumn("id").AsInt64().PrimaryKey()
+            .WithColumn("company_id").AsInt64().NotNullable().ForeignKey("companies", "id")
+            .WithColumn("special_situation_id").AsInt64().NotNullable().ForeignKey("special_situations", "id")
+            .WithColumn("start_date").AsDateTime().NotNullable();
 
         Create.Table("meis")
             .WithColumn("id").AsInt64().PrimaryKey().Identity()
@@ -258,9 +259,14 @@ public class InitialMigration : Migration
             .OnTable("company_contacts")
             .Columns("company_id", "contact_id");
 
-        //Create.PrimaryKey("PK_company_secondary_economic_activities")
-        //    .OnTable("company_secondary_economic_activities")
-        //    .Columns("company_id", "economic_activity_id");
+        Create.PrimaryKey("PK_company_secondary_economic_activities")
+            .OnTable("company_secondary_economic_activities")
+            .Columns("company_id", "economic_activity_id");
+
+        Create.ForeignKey("FK_company_special_situations_companies")
+            .FromTable("company_special_situations").ForeignColumn("company_id")
+            .ToTable("companies").PrimaryColumn("id")
+            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
     }
 
     public override void Down()
@@ -279,7 +285,7 @@ public class InitialMigration : Migration
         Delete.ForeignKey("FK_company_contacts_company").OnTable("company_contacts");
         Delete.ForeignKey("FK_simples_mei").OnTable("simples");
         Delete.ForeignKey("FK_simples_company").OnTable("simples");
-        Delete.ForeignKey("FK_company_special_situations").OnTable("companies");
+        Delete.ForeignKey("FK_companies_company_special_situations").OnTable("companies");
         Delete.ForeignKey("FK_company_economic_activities").OnTable("companies");
         Delete.ForeignKey("FK_company_addresses").OnTable("companies");
         Delete.ForeignKey("FK_company_countries").OnTable("companies");
@@ -298,14 +304,13 @@ public class InitialMigration : Migration
         Delete.Table("company_secondary_economic_activities").IfExists();
         Delete.Table("company_contacts").IfExists();
         Delete.Table("simples").IfExists();
-        Delete.Table("mei").IfExists();
+        Delete.Table("meis").IfExists();
         Delete.Table("companies").IfExists();
         Delete.Table("addresses").IfExists();
         Delete.Table("contacts").IfExists();
         Delete.Table("phones").IfExists();
         Delete.Table("address_types").IfExists();
         Delete.Table("special_situations").IfExists();
-        Delete.Table("adress_types").IfExists();
         Delete.Table("reasons").IfExists();
         Delete.Table("economic_activities").IfExists();
         Delete.Table("legal_natures").IfExists();
@@ -330,7 +335,6 @@ public class InitialMigration : Migration
             .WithColumn("company_type_id").AsInt32().NotNullable()
             .WithColumn("country_id").AsInt64().Nullable()
             .WithColumn("address_id").AsInt64().NotNullable()
-            .WithColumn("company_special_situation_id").AsInt32().Nullable()
             .WithColumn("main_economic_activity_id").AsInt64().NotNullable()
             .WithColumn("identifier").AsString().NotNullable()
             .WithColumn("name").AsString().NotNullable()
@@ -376,11 +380,6 @@ public class InitialMigration : Migration
         Create.ForeignKey("FK_company_economic_activities")
             .FromTable("companies").ForeignColumn("main_economic_activity_id")
             .ToTable("economic_activities").PrimaryColumn("id")
-            .OnDeleteOrUpdate(System.Data.Rule.Cascade);
-
-        Create.ForeignKey("FK_company_special_situations")
-            .FromTable("companies").ForeignColumn("company_special_situation_id")
-            .ToTable("company_special_situations").PrimaryColumn("id")
             .OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
         Create.Index("PK_company_identifier").OnTable("companies").OnColumn("identifier").Unique();

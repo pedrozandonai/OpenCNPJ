@@ -16,6 +16,7 @@ using OpenCnpj.ConsoleApp.Services.CsvProcessingServices;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Factory;
 using OpenCnpj.ConsoleApp.Services.CsvProcessingServices.Strategy.Strategies;
 using OpenCnpj.ConsoleApp.Services.Interfaces;
+using OpenCnpj.Core.Database.Services;
 
 namespace OpenCnpj.ConsoleApp.DependencyInjection;
 public static class ServicesInjection
@@ -37,6 +38,7 @@ public static class ServicesInjection
         services.AddTransient<IAddressService, AddressService>();
         services.AddTransient<ICompanyService, CompanyService>();
         services.AddTransient<ISimpleService, SimpleService>();
+        services.AddSingleton<IPgBulkCopyService, PgBulkCopyService>();
 
         // *--Strategies for CSV Files--*
         services.AddScoped<CsvStrategyFactory>();

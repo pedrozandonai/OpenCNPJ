@@ -9,4 +9,5 @@ public interface ISpecialSituationRepository : IOpenCnpjDatabaseFactory
     Task Insert(IEnumerable<SpecialSituation> specialSituations, CancellationToken cancellationToken);
     Task<SpecialSituation?> GetByDescription(string description, CancellationToken cancellationToken);
     Task<IEnumerable<SpecialSituation>> GetAll(CancellationToken cancellationToken);
+    Task CopyToTable(IEnumerable<SpecialSituation> specialSituations, CancellationToken cancellationToken);
 }
