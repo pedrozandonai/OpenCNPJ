@@ -1,16 +1,17 @@
 ﻿using System.Data;
 
 namespace OpenCnpj.Core.Database.Factory.Interfaces;
-public interface IDatabaseFactory : IDisposable
+public interface IDatabaseFactory
 {
-    public string ConnectionString { get; }
-    public IDbConnection Connection { get; }
-    public IDbTransaction? Transaction { get; }
-    bool TransactionIsOpen { get; }
-    void Begin();
-    Task BeginAsync();
+    IDbConnection Connection { get; }
+    string ConnectionString { get; }
+    IDbTransaction? Transaction { get; }
+
+    void Begin(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
+    Task BeginAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
     void Commit();
     Task CommitAsync();
+    void Dispose();
     void Rollback();
     Task RollbackAsync();
 }

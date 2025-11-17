@@ -40,7 +40,7 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
                                     status AS Status,
                                     application_last_step_id AS ApplicationLastStepId
                                FROM batches
-                              WHERE identifier = @Identifier";
+                              WHERE identifier = @identifier";
 
         var command = new CommandDefinition(sql, new { identifier }, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
 

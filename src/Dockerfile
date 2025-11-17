@@ -4,12 +4,12 @@ WORKDIR /src
 
 # Copia csproj e restaura dependências
 COPY OpenCnpj.sln .
-COPY OpenCnpj.ConsoleApp/*.csproj ./OpenCnpj.ConsoleApp/
-RUN dotnet restore ./OpenCnpj.ConsoleApp
+COPY OpenCnpj.WebApi/*.csproj ./OpenCnpj.WebApi/
+RUN dotnet restore ./OpenCnpj.WebApi
 
 # Copia tudo e publica
 COPY . .
-WORKDIR /src/OpenCnpj.ConsoleApp
+WORKDIR /src/OpenCnpj.WebApi
 RUN dotnet publish -c Release -o /app
 
 # Runtime
@@ -17,4 +17,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY --from=build /app .
 
-ENTRYPOINT ["dotnet", "OpenCnpj.ConsoleApp.dll"]
+ENTRYPOINT ["dotnet", "OpenCnpj.WebApi.dll"]

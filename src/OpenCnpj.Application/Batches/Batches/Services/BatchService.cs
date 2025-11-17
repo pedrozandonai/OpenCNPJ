@@ -2,11 +2,12 @@
 using OpenCnpj.Application.ApplicationSteps.Models.Enums;
 using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Repositories;
+using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
 
 namespace OpenCnpj.Application.Batches.Batches.Services;
 
-public class BatchService(IBatchRepository batchRepository, ILogger logger) : IBatchService
+public class BatchService(IDatabaseFactory databaseFactory, IBatchRepository batchRepository, ILogger logger) : IBatchService
 {
     private readonly ILogger _logger = logger.ForContext<BatchService>();
 
@@ -14,7 +15,7 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
     {
         try
         {
-            await batchRepository.DatabaseFactory.BeginAsync();
+            await databaseFactory.BeginAsync();
 
             var batch = Batch.Create(identifier);
 
@@ -26,7 +27,7 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
 
             batch.SetID(batchID);
 
-            await batchRepository.DatabaseFactory.CommitAsync();
+            await databaseFactory.CommitAsync();
 
             _logger.Information("Created batch {0} for period {1}.", batch.ID, batch.Identifier);
 
@@ -46,13 +47,13 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
     {
         try
         {
-            await batchRepository.DatabaseFactory.BeginAsync();
+            await databaseFactory.BeginAsync();
 
             batch.Update(newStatus);
 
             await batchRepository.Update(batch, cancellationToken);
 
-            await batchRepository.DatabaseFactory.CommitAsync();
+            await databaseFactory.CommitAsync();
 
             return Result.Success(batch);
         }
@@ -68,7 +69,7 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
 
     public async Task<Result> SetApplicationLastStep(Batch batch, EApplicationStep lastApplicationStep, CancellationToken cancellationToken)
     {
-        await batchRepository.DatabaseFactory.BeginAsync();
+        await databaseFactory.BeginAsync();
 
         bool isLastStepInvalid = false;
         
@@ -98,7 +99,7 @@ public class BatchService(IBatchRepository batchRepository, ILogger logger) : IB
         
         batch.SetLastStep(lastApplicationStep);
         
-        await batchRepository.DatabaseFactory.CommitAsync();
+        await databaseFactory.CommitAsync();
 
         return Result.Success();
     }

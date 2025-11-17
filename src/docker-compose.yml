@@ -5,23 +5,9 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - postgres
       - mongodb
     environment:
-      - ConnectionStrings__Postgresql=Host=postgres;Database=opencnpj;Username=postgres;Password=postgres
       - ConnectionStrings__MongoDB=mongodb://mongodb:27017
-
-  postgres:
-    image: postgres
-    container_name: OpenCNPJPostgresDB
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: opencnpj
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
   mongodb:
     image: mongo
@@ -32,5 +18,4 @@ services:
       - mongo_data:/data/db
 
 volumes:
-  postgres_data:
   mongo_data:
