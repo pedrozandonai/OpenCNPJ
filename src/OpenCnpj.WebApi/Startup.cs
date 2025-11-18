@@ -1,4 +1,5 @@
-﻿using OpenCnpj.WebApi.DependencyInjection;
+﻿using Asp.Versioning;
+using OpenCnpj.WebApi.DependencyInjection;
 
 namespace OpenCnpj.WebApi;
 
@@ -10,12 +11,18 @@ public class Startup(IConfiguration configuration)
             .AddConfigurations(configuration)
             .AddBackgrounds(configuration)
             .AddDatabase(configuration)
+            .AddMediator()
             .AddRepositories()
             .AddQueries()
             .AddClients()
             .AddServices();
 
-        services.AddApiVersioning();
+        services.AddApiVersioning(config =>
+        {
+            config.DefaultApiVersion = new ApiVersion(1, 0);
+            config.AssumeDefaultVersionWhenUnspecified = true;
+            config.ReportApiVersions = true;
+        });
         services.AddHealthChecks();
         services.AddControllers();
         services.AddScalar();

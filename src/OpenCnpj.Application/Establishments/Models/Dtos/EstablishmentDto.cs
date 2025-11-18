@@ -8,4 +8,4 @@ using OpenCnpj.Application.Reasons.Models.Dtos;
 using OpenCnpj.Application.SpecialSituations.Models.Dtos;
 
 namespace OpenCnpj.Application.Establishments.Models.Dtos;
-public record EstablishmentDto(CnpjDto Cnpj, string CnpjVerifierDigits, CompanyTypeDto CompanyType, string TradeName, CompanySituationDto CompanySituation, DateTime RegistratiionDateTime, ReasonDto SituationReason, string? ForeignCityName, AddressDto Address, DateTime StartActivityDate, EconomicActivityDto MainEconomicActivity, IEnumerable<EconomicActivityDto> SecondaryEconomicActivities, ContactDto Contact, SpecialSituationDto? SpecialSituation);
+public record EstablishmentDto(CnpjDto Cnpj, CompanyTypeDto CompanyType, string TradeName, CompanySituationDto CompanySituation, DateTime RegistratiionDateTime, ReasonDto SituationReason, string? ForeignCityName, AddressDto Address, DateTime StartActivityDate, EconomicActivityDto MainEconomicActivity, IEnumerable<EconomicActivityDto> SecondaryEconomicActivities, ContactDto Contact, SpecialSituationDto? SpecialSituation);

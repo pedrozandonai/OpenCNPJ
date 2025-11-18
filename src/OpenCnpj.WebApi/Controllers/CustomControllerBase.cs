@@ -18,11 +18,11 @@ public class CustomControllerBase : ControllerBase
     }
 
     [NonAction]
-    public virtual IActionResult NotFound(string title, IEnumerable<string> details)
+    public virtual IActionResult NotFound(string title)
     {
         int statusCode = (int)HttpStatusCode.NotFound;
 
-        return new ObjectResult(new ApplicationErrorDto("Not Found", title, statusCode, Guid.CreateVersion7(), details))
+        return new ObjectResult(new ApplicationErrorDto("Not Found", title, statusCode, Guid.CreateVersion7(), []))
         {
             StatusCode = statusCode
         };

@@ -1,9 +1,13 @@
-﻿using OpenCnpj.Core;
+﻿using CSharpFunctionalExtensions;
+using OpenCnpj.Application.Companies.Models.Dtos;
+using OpenCnpj.Core;
 
 namespace OpenCnpj.Application.Companies.Commands;
-public record GetByFiltersCommand : IRequest
+public record GetByFiltersCommand : IRequest<Result<IEnumerable<CompanyDto>>>
 {
     public string? CompanyName { get; init; }
+    public string? FullCnpj { get; init; }
+    public string? BaseCnpj { get; init; }
     public int? LegalNatureCode { get; init; }
     public int? ResponsibleQualification { get; init; }
     public int? ShareCapital { get; init; }

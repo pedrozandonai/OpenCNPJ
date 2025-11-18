@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using OpenCnpj.Application.Companies.Commands;
 using OpenCnpj.Core;
 
 namespace OpenCnpj.WebApi.Controllers;
@@ -10,9 +11,16 @@ namespace OpenCnpj.WebApi.Controllers;
 public class CompaniesController(IMediator mediator) : CustomControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetByFilters(string cnpj, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByFilters([FromQuery] GetByFiltersCommand command, CancellationToken cancellationToken)
     {
-        return Ok();
+        var result = await mediator.Send(command, cancellationToken);
+        if (result.IsFailure)
+            return BadRequest("Não foi possível retornar as empresas com os filtros fornecidos", [result.Error]);
+
+        if (!result.Value.Any())
+            return NotFound("Não foi possível localizar empresas com base nos filtros fornecidos.");
+
+        return Ok(result.Value);
     }
 
     [HttpGet("{cnpj}")]
