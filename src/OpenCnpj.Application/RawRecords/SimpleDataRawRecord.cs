@@ -5,7 +5,7 @@ namespace OpenCnpj.Application.RawRecords;
 [BsonIgnoreExtraElements]
 public class SimpleDataRawRecord
 {
-    public string BasicCnpj { get; set; }
+    public string BasicCnpj { get; set; } = string.Empty;
     public bool? OptInSimple { get; set; } // S, N, blank
     public DateTime? SimpleOptionDate { get; set; }
     public DateTime? SimpleExclusionDate { get; set; }

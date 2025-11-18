@@ -1,5 +1,4 @@
-﻿using FluentMigrator;
-using FluentMigrator.Runner;
+﻿using FluentMigrator.Runner;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory;

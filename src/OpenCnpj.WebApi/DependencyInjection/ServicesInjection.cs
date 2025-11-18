@@ -1,10 +1,9 @@
-﻿using OpenCnpj.Application.Batches.Batches.Services;
-using OpenCnpj.Application.Batches.BatchFiles.Services;
-using OpenCnpj.WebApi.Services;
-using OpenCnpj.WebApi.Services.CsvProcessingServices;
-using OpenCnpj.WebApi.Services.CsvProcessingServices.Strategy.Factory;
-using OpenCnpj.WebApi.Services.CsvProcessingServices.Strategy.Strategies;
-using OpenCnpj.WebApi.Services.Interfaces;
+﻿using OpenCnpj.Application.Application.Services;
+using OpenCnpj.Application.Application.Services.CsvProcessingServices;
+using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Factory;
+using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Strategies;
+using OpenCnpj.Application.Application.Services.Interfaces;
+using OpenCnpj.Application.Batches.Batches.Services;
 
 namespace OpenCnpj.WebApi.DependencyInjection;
 public static class ServicesInjection
@@ -14,7 +13,6 @@ public static class ServicesInjection
         services.AddTransient<IBatchService, BatchService>();
         services.AddTransient<IFileExtractionService, FileExtractionService>();
         services.AddTransient<ICsvProcessingService, CsvProcessingService>();
-        services.AddTransient<IBatchFileService, BatchFileService>();
 
         // *--Strategies for CSV Files--*
         services.AddScoped<CsvStrategyFactory>();

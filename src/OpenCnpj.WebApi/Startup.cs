@@ -1,5 +1,4 @@
 ﻿using OpenCnpj.WebApi.DependencyInjection;
-using OpenCnpj.WebApi.HostedServices;
 
 namespace OpenCnpj.WebApi;
 
@@ -9,13 +8,12 @@ public class Startup(IConfiguration configuration)
     {
         services
             .AddConfigurations(configuration)
+            .AddBackgrounds(configuration)
             .AddDatabase(configuration)
             .AddRepositories()
             .AddQueries()
             .AddClients()
             .AddServices();
-
-        services.AddHostedService<OpenCnpjHostedService>();
 
         services.AddApiVersioning();
         services.AddHealthChecks();

@@ -3,7 +3,6 @@ public static class SqliteHelper
 {
     public static string GetSqliteDbFolder()
     {
-        //var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         return Path.Combine(appData, "OpenCNPJ");

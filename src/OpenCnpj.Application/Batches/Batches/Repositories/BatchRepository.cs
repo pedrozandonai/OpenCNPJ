@@ -10,11 +10,17 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
     public async Task<int> Insert(Batch batch, CancellationToken cancellationToken)
     {
         const string sql = @"INSERT INTO batches (identifier,
-                                                  status,
-                                                  application_last_step_id)
+                                                  operation,
+                                                  operation_status,
+                                                  operation_failure_description,
+                                                  directory,
+                                                  retry_date)
                                           VALUES (@Identifier,
-                                                  @Status,
-                                                  @ApplicationLastStepID)
+                                                  @Operation,
+                                                  @OperationStatus,
+                                                  @OperationFailureDescription,
+                                                  @Directory,
+                                                  @RetryDate)
                                        RETURNING id";
 
         var command = new CommandDefinition(sql, batch, transaction:DatabaseFactory.Transaction, cancellationToken:cancellationToken);
@@ -25,7 +31,12 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
     public async Task Update(Batch batch, CancellationToken cancellationToken)
     {
         const string sql = @"UPDATE batches
-                                SET status = @Status
+                                SET identifier = @Identifier,
+                                    operation = @Operation,
+                                    operation_status = @OperationStatus,
+                                    operation_failure_description = @OperationFailureDescription,
+                                    directory = @Directory,
+                                    retry_date = @RetryDate
                               WHERE id = @ID";
 
         var command = new CommandDefinition(sql, batch, transaction: DatabaseFactory.Transaction, cancellationToken: cancellationToken);
@@ -37,8 +48,11 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
     {
         const string sql = @"SELECT id AS ID,
                                     identifier AS Identifier,
-                                    status AS Status,
-                                    application_last_step_id AS ApplicationLastStepId
+                                    operation AS Operation,
+                                    operation_status AS OperationStatus,
+                                    operation_failure_description AS OperationFailureDescription,
+                                    directory AS Directory,
+                                    retry_date AS RetryDate
                                FROM batches
                               WHERE identifier = @identifier";
 

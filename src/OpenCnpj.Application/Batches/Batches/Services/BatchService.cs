@@ -1,5 +1,4 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.Application.ApplicationSteps.Models.Enums;
 using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Repositories;
 using OpenCnpj.Core.Database.Factory.Interfaces;
@@ -42,14 +41,16 @@ public class BatchService(IDatabaseFactory databaseFactory, IBatchRepository bat
             return Result.Failure<Batch>(errorMessage);
         }
     }
-    
-    public async Task<Result<Batch>> UpdateBatchStatus(Batch batch, string newStatus, CancellationToken cancellationToken)
+
+    public async Task<Result> UpdateBatch(Batch batch, Func<Result> func, CancellationToken cancellationToken)
     {
         try
         {
             await databaseFactory.BeginAsync();
 
-            batch.Update(newStatus);
+            var funcResult = func.Invoke();
+            if (funcResult.IsFailure)
+                return funcResult;
 
             await batchRepository.Update(batch, cancellationToken);
 
@@ -65,42 +66,5 @@ public class BatchService(IDatabaseFactory databaseFactory, IBatchRepository bat
 
             return Result.Failure<Batch>(errorMessage);
         }
-    }
-
-    public async Task<Result> SetApplicationLastStep(Batch batch, EApplicationStep lastApplicationStep, CancellationToken cancellationToken)
-    {
-        await databaseFactory.BeginAsync();
-
-        bool isLastStepInvalid = false;
-        
-        switch (batch.ApplicationLastStepID)
-        {
-            case EApplicationStep.StartedApplication:
-                if (lastApplicationStep != EApplicationStep.DownloadingFiles)
-                    isLastStepInvalid = true;
-                break;
-            
-            case EApplicationStep.DownloadingFiles:
-                if (lastApplicationStep != EApplicationStep.ExtractingFiles)
-                    isLastStepInvalid = true;
-                break;
-            
-            case EApplicationStep.ExtractingFiles:
-                if (lastApplicationStep != EApplicationStep.FormattingRawData)
-                    isLastStepInvalid = true;
-                break;
-            
-            default:
-                return Result.Failure("Could not recognize the last application step.");
-        }
-        
-        if (isLastStepInvalid)
-            return Result.Failure("The last step is invalid.");
-        
-        batch.SetLastStep(lastApplicationStep);
-        
-        await databaseFactory.CommitAsync();
-
-        return Result.Success();
     }
 }

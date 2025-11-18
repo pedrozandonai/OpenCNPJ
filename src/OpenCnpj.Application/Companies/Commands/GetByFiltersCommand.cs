@@ -1,0 +1,21 @@
+﻿using OpenCnpj.Core;
+
+namespace OpenCnpj.Application.Companies.Commands;
+public record GetByFiltersCommand : IRequest
+{
+    public string? CompanyName { get; init; }
+    public int? LegalNatureCode { get; init; }
+    public int? ResponsibleQualification { get; init; }
+    public int? ShareCapital { get; init; }
+    public int? CompanySize { get; init; }
+    public bool? HeadOffice { get; init; }
+    public string? TradeName { get; init; }
+    public int? RegistrationStatus { get; init; }
+    public int? Cnae { get; init; }
+    public string? Cnaes { get; init; }
+    public string? StreetName { get; init; }
+    public string? AddressNumber { get; init; }
+    public string? AddressDistrict { get; init; }
+    public string? AddressState { get; init; }
+    public string? ZipCode { get; init; }
+}

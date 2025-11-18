@@ -12,5 +12,5 @@ public class CompanyRawRecord
     public int ResponsibleQualification { get; set; }
     public decimal ShareCapital { get; set; }
     public ECompanySize? CompanySize { get; set; }
-    public string ResponsibleFederativeEntity { get; set; } = string.Empty; // Não sei o que vai aqui, mas ta lá
+    public string ResponsibleFederativeEntity { get; set; } = string.Empty;
 }

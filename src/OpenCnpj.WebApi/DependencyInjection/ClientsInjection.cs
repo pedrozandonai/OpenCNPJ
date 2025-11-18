@@ -1,5 +1,5 @@
-﻿using OpenCnpj.WebApi.Clients;
-using OpenCnpj.WebApi.Clients.Interfaces;
+﻿using OpenCnpj.Application.Government.Clients;
+using OpenCnpj.Application.Government.Clients.Interfaces;
 
 namespace OpenCnpj.WebApi.DependencyInjection;
 public static class ClientsInjection
