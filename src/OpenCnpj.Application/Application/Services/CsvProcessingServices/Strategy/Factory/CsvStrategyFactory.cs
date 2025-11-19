@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Strategies;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Configurations;
@@ -34,27 +33,18 @@ public class CsvStrategyFactory
         var logger = _serviceProvider.GetRequiredService<ILogger>();
 
         _strategies["Paises"] = new ReferenceDataProcessingStrategy<CountryRawRecord>("Paises", mongoDatabaseFactory, tweakSettings, logger);
-
         _strategies["Municipios"] = new ReferenceDataProcessingStrategy<CityRawRecord>("Municipios", mongoDatabaseFactory, tweakSettings, logger);
-
         _strategies["Qualificacoes"] = new ReferenceDataProcessingStrategy<PartnerQualificationRawRecord>("Qualificacoes", mongoDatabaseFactory, tweakSettings, logger);
-
         _strategies["Naturezas"] = new ReferenceDataProcessingStrategy<LegalNatureRawRecord>("Naturezas", mongoDatabaseFactory, tweakSettings, logger);
-
         _strategies["Cnaes"] = new ReferenceDataProcessingStrategy<CnaeRawRecord>("Cnaes", mongoDatabaseFactory, tweakSettings, logger);
-
         _strategies["Motivos"] = new ReferenceDataProcessingStrategy<ReasonRawRecord>("Motivos", mongoDatabaseFactory, tweakSettings, logger);
     }
 
     public ICsvProcessingStrategy? GetStrategy(string fileName)
     {
         foreach (var (pattern, strategy) in _strategies)
-        {
             if (fileName.StartsWith(pattern, StringComparison.OrdinalIgnoreCase))
-            {
                 return strategy;
-            }
-        }
 
         return null;
     }

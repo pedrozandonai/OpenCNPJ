@@ -1,8 +1,8 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper;
 using OpenCnpj.Application.Application.Mappers;
-using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy;
-using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Domain;
+using OpenCnpj.Application.MongoApplicationCollections.Domain;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
@@ -10,7 +10,7 @@ using OpenCnpj.Core.Helpers;
 using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Strategies;
-public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T : RawRecordBase, new()
+public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T : RawRecordBase, IMongoApplicationCollection
 {
     private readonly IMongoDatabaseFactory _mongoDatabaseFactory;
     private readonly TweakSettings _tweakSettings;
@@ -31,11 +31,11 @@ public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T
     {
         try
         {
-            csvReader.Context.RegisterClassMap<RecordBaseMapper>();
-            var records = csvReader.GetRecords<T>();
+            csvReader.Context.RegisterClassMap(new RawRecordBaseMap<T>());
+            var records = csvReader.GetRecords<T>().ToList();
 
             var mongoDbBatchInsert = new MongoDbBatchInsert<T>(_mongoDatabaseFactory, _tweakSettings, _logger);
-            await mongoDbBatchInsert.ProcessRecords(records, typeof(T).Name, cancellationToken);
+            await mongoDbBatchInsert.ProcessRecords(records, records[0].CollectionName, cancellationToken);
 
             return Result.Success();
         }

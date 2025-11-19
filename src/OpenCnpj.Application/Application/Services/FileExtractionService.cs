@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Batches.Domain;
-using OpenCnpj.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.Domain;
+using OpenCnpj.Application.Batches.Services;
 using System.IO.Compression;
 using ILogger = Serilog.ILogger;
 

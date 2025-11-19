@@ -7,11 +7,11 @@ namespace OpenCnpj.WebApi.Controllers;
 public class CustomControllerBase : ControllerBase
 {
     [NonAction]
-    public virtual IActionResult BadRequest(string title, IEnumerable<string> details)
+    public virtual IActionResult BadRequest(string title, string description)
     {
         int statusCode = (int)HttpStatusCode.BadRequest;
 
-        return new ObjectResult(new ApplicationErrorDto("Bad Request", title, statusCode, Guid.CreateVersion7(), details))
+        return new ObjectResult(new ApplicationErrorDto("Bad Request", title, statusCode, Guid.CreateVersion7(), description))
         {
             StatusCode = statusCode
         };
@@ -22,7 +22,7 @@ public class CustomControllerBase : ControllerBase
     {
         int statusCode = (int)HttpStatusCode.NotFound;
 
-        return new ObjectResult(new ApplicationErrorDto("Not Found", title, statusCode, Guid.CreateVersion7(), []))
+        return new ObjectResult(new ApplicationErrorDto("Not Found", title, statusCode, Guid.CreateVersion7(), string.Empty))
         {
             StatusCode = statusCode
         };

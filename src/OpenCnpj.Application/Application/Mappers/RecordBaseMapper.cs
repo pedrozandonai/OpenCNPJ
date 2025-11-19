@@ -2,9 +2,9 @@
 using OpenCnpj.Application.RawRecords;
 
 namespace OpenCnpj.Application.Application.Mappers;
-public class RecordBaseMapper : ClassMap<RawRecordBase>
+public class RawRecordBaseMap<T> : ClassMap<T> where T : RawRecordBase
 {
-    public RecordBaseMapper()
+    public RawRecordBaseMap()
     {
         Map(r => r.Code).Index(0);
         Map(r => r.Description).Index(1);

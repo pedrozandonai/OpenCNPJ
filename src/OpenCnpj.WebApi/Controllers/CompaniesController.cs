@@ -15,7 +15,7 @@ public class CompaniesController(IMediator mediator) : CustomControllerBase
     {
         var result = await mediator.Send(command, cancellationToken);
         if (result.IsFailure)
-            return BadRequest("Não foi possível retornar as empresas com os filtros fornecidos", [result.Error]);
+            return BadRequest("Não foi possível retornar as empresas com os filtros fornecidos", result.Error);
 
         if (!result.Value.Any())
             return NotFound("Não foi possível localizar empresas com base nos filtros fornecidos.");
@@ -26,6 +26,6 @@ public class CompaniesController(IMediator mediator) : CustomControllerBase
     [HttpGet("{cnpj}")]
     public async Task<IActionResult> GetByCnpj(string cnpj, CancellationToken cancellationToken)
     {
-        return Ok();
+        throw new NotImplementedException();
     }
 }

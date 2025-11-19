@@ -1,11 +1,16 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.Enums;
+using OpenCnpj.Application.MongoApplicationCollections.Domain;
+using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.RawRecords;
 
 [BsonIgnoreExtraElements]
-public class EstablishmentRawRecord
+public class EstablishmentRawRecord : IMongoApplicationCollection
 {
+    public string CollectionName => "establishments";
+
+    [MongoIndex]
     public string BasicCnpj { get; set; } = string.Empty;
     public string OrderCnpj { get; set; } = string.Empty;
     public string CheckDigitCnpj { get; set; } = string.Empty;

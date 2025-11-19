@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using OpenCnpj.Core.Database.SqlMappers;
 using OpenCnpj.WebApi.DependencyInjection;
 
 namespace OpenCnpj.WebApi;
@@ -16,6 +17,8 @@ public class Startup(IConfiguration configuration)
             .AddQueries()
             .AddClients()
             .AddServices();
+
+        SqlMappers.AddSqlMappers();
 
         services.AddApiVersioning(config =>
         {

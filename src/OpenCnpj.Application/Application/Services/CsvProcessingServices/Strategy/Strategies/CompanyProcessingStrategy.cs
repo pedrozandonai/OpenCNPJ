@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper;
 using OpenCnpj.Application.Application.Mappers;
-using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Domain;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
@@ -23,7 +23,7 @@ public class CompanyProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactor
 
             var mongoDbBatchInsert = new MongoDbBatchInsert<CompanyRawRecord>(mongoDatabaseFactory, tweakSettings, logger);
 
-            await mongoDbBatchInsert.ProcessRecords(records, "CompaniesRaw", cancellationToken);
+            await mongoDbBatchInsert.ProcessRecords(records, records.First().CollectionName, cancellationToken);
 
             return Result.Success();
         }

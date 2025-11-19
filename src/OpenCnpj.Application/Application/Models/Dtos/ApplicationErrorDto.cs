@@ -6,14 +6,14 @@ public record ApplicationErrorDto
     public string Title { get; set; }
     public int Status { get; set; }
     public Guid TraceId { get; set; }
-    public IEnumerable<string> Errors { get; set; }
+    public string Description { get; set; }
 
-    public ApplicationErrorDto(string error, string title, int status, Guid traceId, IEnumerable<string> errors)
+    public ApplicationErrorDto(string error, string title, int status, Guid traceId, string description)
     {
         Error = error;
         Title = title;
         Status = status;
         TraceId = traceId;
-        Errors = errors;
+        Description = description;
     }
 }

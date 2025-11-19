@@ -3,7 +3,7 @@ using OpenCnpj.Application.Application.Services.CsvProcessingServices;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Factory;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Strategies;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.Services;
 
 namespace OpenCnpj.WebApi.DependencyInjection;
 public static class ServicesInjection
@@ -13,13 +13,15 @@ public static class ServicesInjection
         services.AddTransient<IBatchService, BatchService>();
         services.AddTransient<IFileExtractionService, FileExtractionService>();
         services.AddTransient<ICsvProcessingService, CsvProcessingService>();
+        services.AddTransient<IOpenCnpjScrapperService, OpenCnpjScrapperService>();
+        services.AddTransient<IMongoCollectionsService, MongoCollectionsService>();
 
         // *--Strategies for CSV Files--*
-        services.AddScoped<CsvStrategyFactory>();
-        services.AddScoped<CompanyProcessingStrategy>();
-        services.AddScoped<EstablishmentProcessingStrategy>();
-        services.AddScoped<PartnerProcessingStrategy>();
-        services.AddScoped<SimpleDataProcessingStrategy>();
+        services.AddTransient<CsvStrategyFactory>();
+        services.AddTransient<CompanyProcessingStrategy>();
+        services.AddTransient<EstablishmentProcessingStrategy>();
+        services.AddTransient<PartnerProcessingStrategy>();
+        services.AddTransient<SimpleDataProcessingStrategy>();
 
         return services;
     }

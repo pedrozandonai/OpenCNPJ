@@ -1,6 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper.Configuration;
-using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Domain;
 
 namespace OpenCnpj.Application.Application.Services.CsvProcessingServices;
 public interface ICsvProcessingService

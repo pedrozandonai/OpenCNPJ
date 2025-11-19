@@ -18,10 +18,10 @@ public static class DatabaseInjection
 
         SqliteHelper.InitializeSqliteFolder();
 
-        var sqliteDatabaseFactory = new DatabaseFactory(SqliteHelper.GetSqliteConnectionString());
-        services.AddScoped<IDatabaseFactory>(sr => sqliteDatabaseFactory);
+        services.AddScoped<IDatabaseFactory>(sp =>
+            new DatabaseFactory(SqliteHelper.GetSqliteConnectionString()));
 
-        var mongoDatabaseFactory = new MongoDatabaseFactory(mongoConnectionString, "OpenCnpj");
+        var mongoDatabaseFactory = new MongoDatabaseFactory(mongoConnectionString, "open_cnpj");
         services.AddScoped<IMongoDatabaseFactory>(sr => mongoDatabaseFactory);
 
         services.AddHealthChecks()
@@ -53,8 +53,6 @@ public static class DatabaseInjection
 
             Task.Run(async () => await client.DropDatabaseAsync(databaseName));
         }
-
-        Task.Run(async () => await MongoIndexes.EnsureIndexes(mongoFactory));
 
         runner.MigrateUp();
 

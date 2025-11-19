@@ -1,6 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.Application.Batches.Batches.Domain;
-using OpenCnpj.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.Domain;
+using OpenCnpj.Application.Batches.Services;
 using OpenCnpj.Application.Government.Clients.Interfaces;
 using OpenCnpj.Core.Configurations;
 using Polly;

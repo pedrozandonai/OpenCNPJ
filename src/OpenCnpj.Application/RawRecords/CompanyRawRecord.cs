@@ -1,11 +1,16 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.Enums;
+using OpenCnpj.Application.MongoApplicationCollections.Domain;
+using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.RawRecords;
 
 [BsonIgnoreExtraElements]
-public class CompanyRawRecord
+public class CompanyRawRecord : IMongoApplicationCollection
 {
+    public string CollectionName => "companies";
+
+    [MongoIndex(unique: true)]
     public string BasicCnpj { get; set; } = string.Empty;
     public string CorporateName { get; set; } = string.Empty;
     public int LegalNatureCode { get; set; }

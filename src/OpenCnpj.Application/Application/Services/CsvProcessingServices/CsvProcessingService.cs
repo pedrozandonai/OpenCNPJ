@@ -2,8 +2,8 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Factory;
-using OpenCnpj.Application.Batches.Batches.Domain;
-using OpenCnpj.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.Domain;
+using OpenCnpj.Application.Batches.Services;
 using OpenCnpj.Core.Configurations;
 using System.Globalization;
 using System.Text;
@@ -130,10 +130,11 @@ public class CsvProcessingService(IBatchService batchService, CsvStrategyFactory
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Unexpected error processing file: {1}", fileName);
+            string errorMessage = string.Format("Unexpected error processing file: {0}", fileName);
 
+            logger.Error(ex, errorMessage);
 
-            return Result.Failure($"Unexpected error processing {fileName}: {ex.Message}");
+            return Result.Failure(errorMessage);
         }
     }
 

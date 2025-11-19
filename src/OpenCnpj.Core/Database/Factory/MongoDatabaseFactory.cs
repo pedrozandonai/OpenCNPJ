@@ -2,7 +2,7 @@
 using OpenCnpj.Core.Database.Factory.Interfaces;
 
 namespace OpenCnpj.Core.Database.Factory;
-//TODO: Ver do por que o banco não aceita utf-16 (com acentos)
+
 public class MongoDatabaseFactory : IMongoDatabaseFactory
 {
     private readonly MongoClient _client;

@@ -1,4 +1,4 @@
-﻿using OpenCnpj.Application.Batches.Batches.Repositories;
+﻿using OpenCnpj.Application.Batches.Repositories;
 
 namespace OpenCnpj.WebApi.DependencyInjection;
 public static class RepositoriesInjection

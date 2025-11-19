@@ -1,8 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper;
 using OpenCnpj.Application.Application.Mappers;
-using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy;
-using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Domain;
 using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
@@ -23,7 +22,7 @@ public class PartnerProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactor
             var records = csvReader.GetRecords<PartnerRawRecord>();
 
             var mongoDbBatchInsert = new MongoDbBatchInsert<PartnerRawRecord>(mongoDatabaseFactory, tweakSettings, logger);
-            await mongoDbBatchInsert.ProcessRecords(records, "PartnersRaw", cancellationToken);
+            await mongoDbBatchInsert.ProcessRecords(records, records.First().CollectionName, cancellationToken);
 
             return Result.Success();
         }
