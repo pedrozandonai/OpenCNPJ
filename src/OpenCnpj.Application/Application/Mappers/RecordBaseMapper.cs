@@ -1,8 +1,8 @@
 ﻿using CsvHelper.Configuration;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 namespace OpenCnpj.Application.Application.Mappers;
-public class RawRecordBaseMap<T> : ClassMap<T> where T : RawRecordBase
+public class RawRecordBaseMap<T> : ClassMap<T> where T : CollectionBase
 {
     public RawRecordBaseMap()
     {

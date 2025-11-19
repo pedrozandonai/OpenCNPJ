@@ -1,12 +1,11 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using OpenCnpj.Application.Enums;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 using OpenCnpj.Core.Attributes;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
-public class EstablishmentRawRecord : IMongoApplicationCollection
+public class EstablishmentsCollection : IMongoApplicationCollection
 {
     public string CollectionName => "establishments";
 
@@ -14,7 +13,7 @@ public class EstablishmentRawRecord : IMongoApplicationCollection
     public string BasicCnpj { get; set; } = string.Empty;
     public string OrderCnpj { get; set; } = string.Empty;
     public string CheckDigitCnpj { get; set; } = string.Empty;
-    public ECompanyType HeadOfficeOrBranch { get; set; }
+    public short HeadOfficeOrBranch { get; set; }
     public string TradeName { get; set; } = string.Empty;
     public string RegistrationStatus { get; set; } = string.Empty;
     public DateTime? RegistrationStatusDate { get; set; }
@@ -24,8 +23,8 @@ public class EstablishmentRawRecord : IMongoApplicationCollection
     public DateTime? StartActivityDate { get; set; }
     public string MainCnae { get; set; } = string.Empty;
     public string SecondaryCnaes { get; set; } = string.Empty;
-    public AddressRawRecord Address { get; set; } = null!;
-    public ContactRawRecord Contact { get; set; } = null!;
+    public AddressesCollection Address { get; set; } = null!;
+    public ContactsCollection Contact { get; set; } = null!;
     public string SpecialStatus { get; set; } = string.Empty;
     public DateTime? SpecialStatusDate { get; set; }
 }

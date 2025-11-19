@@ -1,18 +1,17 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using OpenCnpj.Application.Enums;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 using OpenCnpj.Core.Attributes;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
-public class PartnerRawRecord : IMongoApplicationCollection
+public class PartnersCollection : IMongoApplicationCollection
 {
     public string CollectionName => "partners";
 
     [MongoIndex]
     public string BasicCnpj { get; set; } = string.Empty;
-    public EParterType PartnerType { get; set; }
+    public short PartnerType { get; set; }
     public string PartnerName { get; set; } = string.Empty;
     public string PartnerDocument { get; set; } = string.Empty;
     public string PartnerQualification { get; set; } = string.Empty;

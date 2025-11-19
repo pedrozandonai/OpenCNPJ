@@ -1,11 +1,11 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
 
-public class CityRawRecord : RawRecordBase, IMongoApplicationCollection
+public class CitiesCollection : CollectionBase, IMongoApplicationCollection
 {
     public string CollectionName => "cities";
 }

@@ -2,7 +2,7 @@
 using CsvHelper;
 using OpenCnpj.Application.Application.Mappers;
 using OpenCnpj.Application.Batches.Domain;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using OpenCnpj.Core.Helpers;
@@ -19,9 +19,9 @@ public class CompanyProcessingStrategy(IMongoDatabaseFactory mongoDatabaseFactor
         try
         {
             csvReader.Context.RegisterClassMap<CompanyMapper>();
-            var records = csvReader.GetRecords<CompanyRawRecord>();
+            var records = csvReader.GetRecords<CompaniesCollection>();
 
-            var mongoDbBatchInsert = new MongoDbBatchInsert<CompanyRawRecord>(mongoDatabaseFactory, tweakSettings, logger);
+            var mongoDbBatchInsert = new MongoDbBatchInsert<CompaniesCollection>(mongoDatabaseFactory, tweakSettings, logger);
 
             await mongoDbBatchInsert.ProcessRecords(records, records.First().CollectionName, cancellationToken);
 

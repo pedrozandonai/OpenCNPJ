@@ -1,9 +1,9 @@
 ﻿using CsvHelper.Configuration;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using System.Globalization;
 
 namespace OpenCnpj.Application.Application.Mappers;
-public class PartnerMapper : ClassMap<PartnerRawRecord>
+public class PartnerMapper : ClassMap<PartnersCollection>
 {
     public PartnerMapper()
     {

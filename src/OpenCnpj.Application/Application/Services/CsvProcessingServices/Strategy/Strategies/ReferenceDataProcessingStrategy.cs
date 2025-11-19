@@ -2,15 +2,15 @@
 using CsvHelper;
 using OpenCnpj.Application.Application.Mappers;
 using OpenCnpj.Application.Batches.Domain;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
-using OpenCnpj.Application.RawRecords;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using OpenCnpj.Core.Helpers;
 using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Strategies;
-public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T : RawRecordBase, IMongoApplicationCollection
+public class ReferenceDataProcessingStrategy<T> : ICsvProcessingStrategy where T : CollectionBase, IMongoApplicationCollection
 {
     private readonly IMongoDatabaseFactory _mongoDatabaseFactory;
     private readonly TweakSettings _tweakSettings;

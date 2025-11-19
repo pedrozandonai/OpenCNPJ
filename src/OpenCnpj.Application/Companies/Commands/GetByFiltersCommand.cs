@@ -11,7 +11,7 @@ public record GetByFiltersCommand : IRequest<Result<IEnumerable<CompanyDto>>>
     public int? LegalNatureCode { get; init; }
     public int? ResponsibleQualification { get; init; }
     public int? ShareCapital { get; init; }
-    public int? CompanySize { get; init; }
+    public short? CompanySize { get; init; }
     public bool? HeadOffice { get; init; }
     public string? TradeName { get; init; }
     public int? RegistrationStatus { get; init; }

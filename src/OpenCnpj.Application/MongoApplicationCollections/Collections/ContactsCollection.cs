@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
-public class ContactRawRecord : IMongoApplicationCollection
+public class ContactsCollection : IMongoApplicationCollection
 {
     public string CollectionName => "contacts";
     public string PhoneAreaCode1 { get; set; } = string.Empty;

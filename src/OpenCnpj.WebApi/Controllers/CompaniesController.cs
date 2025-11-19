@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 using OpenCnpj.Application.Companies.Commands;
 using OpenCnpj.Core;
 
@@ -15,10 +16,10 @@ public class CompaniesController(IMediator mediator) : CustomControllerBase
     {
         var result = await mediator.Send(command, cancellationToken);
         if (result.IsFailure)
-            return BadRequest("Não foi possível retornar as empresas com os filtros fornecidos", result.Error);
+            return BadRequest("An error occured while trying to return the companies by the filters.", result.Error);
 
         if (!result.Value.Any())
-            return NotFound("Não foi possível localizar empresas com base nos filtros fornecidos.");
+            return NotFound("Unable to find any companies with the informed filters.");
 
         return Ok(result.Value);
     }
@@ -26,6 +27,13 @@ public class CompaniesController(IMediator mediator) : CustomControllerBase
     [HttpGet("{cnpj}")]
     public async Task<IActionResult> GetByCnpj(string cnpj, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var result = await mediator.Send(new GetByCnpjCommand(cnpj), cancellationToken);
+        if (result.IsFailure)
+            return BadRequest("An error occurred while trying to return the company by the CNPJ informed.", result.Error);
+
+        if (result.Value == null)
+            return NotFound("Unable to find the requested company by the CNPJ informed.");
+
+        return Ok(result.Value);
     }
 }

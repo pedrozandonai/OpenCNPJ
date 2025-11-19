@@ -1,14 +1,14 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 namespace OpenCnpj.Application.Companies.Models;
 [BsonIgnoreExtraElements]
-public class CompanyDetailedInformation : CompanyRawRecord
+public class CompanyDetailedInformation : CompaniesCollection
 {
-    public List<EstablishmentRawRecord> Establishments { get; set; } = [];
-    public List<PartnerRawRecord> Partners { get; set; } = [];
-    public List<SimpleDataRawRecord> SimpleData { get; set; } = [];
-    public LegalNatureRawRecord LegalNature { get; set; } = null!;
-    public PartnerQualificationRawRecord PartnerQualification { get; set; } = null!;
+    public List<EstablishmentsCollection> Establishments { get; set; } = [];
+    public List<PartnersCollection> Partners { get; set; } = [];
+    public List<SimplesCollection> SimpleData { get; set; } = [];
+    public LegalNaturesCollection LegalNature { get; set; } = null!;
+    public QualificationsCollection PartnerQualification { get; set; } = null!;
 }
 

@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
-public class LegalNatureRawRecord : RawRecordBase, IMongoApplicationCollection
+public class LegalNaturesCollection : CollectionBase, IMongoApplicationCollection
 {
     public string CollectionName => "legal_natures";
 }

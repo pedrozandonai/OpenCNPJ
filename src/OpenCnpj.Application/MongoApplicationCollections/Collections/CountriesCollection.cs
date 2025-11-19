@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
-public class CountryRawRecord : RawRecordBase, IMongoApplicationCollection
+public class CountriesCollection : CollectionBase, IMongoApplicationCollection
 {
     public string CollectionName => "countries";
 }

@@ -1,9 +1,9 @@
 ﻿using CsvHelper.Configuration;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using System.Globalization;
 
 namespace OpenCnpj.Application.Application.Mappers;
-public class SimpleDataMapper : ClassMap<SimpleDataRawRecord>
+public class SimpleDataMapper : ClassMap<SimplesCollection>
 {
     public SimpleDataMapper()
     {

@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 
-namespace OpenCnpj.Application.RawRecords;
+namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 [BsonIgnoreExtraElements]
-public class SimpleDataRawRecord : IMongoApplicationCollection
+public class SimplesCollection : IMongoApplicationCollection
 {
     public string CollectionName => "simples";
     public string BasicCnpj { get; set; } = string.Empty;

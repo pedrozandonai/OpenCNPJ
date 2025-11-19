@@ -1,9 +1,9 @@
 ﻿using CsvHelper.Configuration;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using System.Globalization;
 
 namespace OpenCnpj.Application.Application.Mappers;
-public class EstablishmentMapper : ClassMap<EstablishmentRawRecord>
+public class EstablishmentMapper : ClassMap<EstablishmentsCollection>
 {
     public EstablishmentMapper()
     {
@@ -32,7 +32,7 @@ public class EstablishmentMapper : ClassMap<EstablishmentRawRecord>
         });
         Map(e => e.MainCnae).Index(11);
         Map(e => e.SecondaryCnaes).Index(12);
-        Map(e => e.Address).Convert(c => new AddressRawRecord
+        Map(e => e.Address).Convert(c => new AddressesCollection
         {
             StreetType = c.Row.GetField(13),
             StreetName = c.Row.GetField(14),
@@ -43,7 +43,7 @@ public class EstablishmentMapper : ClassMap<EstablishmentRawRecord>
             State = c.Row.GetField(19),
             MunicipalityCode = c.Row.GetField(20)
         });
-        Map(e => e.Contact).Convert(c => new ContactRawRecord
+        Map(e => e.Contact).Convert(c => new ContactsCollection
         {
             PhoneAreaCode1 = c.Row.GetField(21),
             PhoneNumber1 = c.Row.GetField(22),

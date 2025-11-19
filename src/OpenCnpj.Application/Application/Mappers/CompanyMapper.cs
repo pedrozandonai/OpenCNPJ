@@ -1,8 +1,8 @@
 ﻿using CsvHelper.Configuration;
-using OpenCnpj.Application.RawRecords;
+using OpenCnpj.Application.MongoApplicationCollections.Collections;
 
 namespace OpenCnpj.Application.Application.Mappers;
-public class CompanyMapper : ClassMap<CompanyRawRecord>
+public class CompanyMapper : ClassMap<CompaniesCollection>
 {
     public CompanyMapper()
     {
