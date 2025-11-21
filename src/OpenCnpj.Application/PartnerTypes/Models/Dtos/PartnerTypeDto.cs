@@ -1,7 +1,7 @@
 ﻿namespace OpenCnpj.Application.PartnerTypes.Models.Dtos;
 public record PartnerTypeDto(short ID, string Description)
 {
-    public static PartnerTypeDto CreateByID(short ID)
+    public static PartnerTypeDto CreateByID(short? ID)
     {
         string description;
 
@@ -20,7 +20,7 @@ public record PartnerTypeDto(short ID, string Description)
                 return new(default, string.Empty);
         }
 
-        return new(ID, description);
+        return new(ID.Value, description);
     }
 }
 

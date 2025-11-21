@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
+using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
@@ -7,6 +8,7 @@ namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 public class SimplesCollection : IMongoApplicationCollection
 {
     public string CollectionName => "simples";
+    [MongoIndex]
     public string BasicCnpj { get; set; } = string.Empty;
     public bool? OptInSimple { get; set; }
     public DateTime? SimpleOptionDate { get; set; }

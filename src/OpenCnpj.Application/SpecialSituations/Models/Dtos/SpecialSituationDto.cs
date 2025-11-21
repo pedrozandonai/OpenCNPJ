@@ -1,2 +1,2 @@
 ﻿namespace OpenCnpj.Application.SpecialSituations.Models.Dtos;
-public record SpecialSituationDto(int ID, string Description, DateTime Date);
+public record SpecialSituationDto(string Description, DateTime Date);

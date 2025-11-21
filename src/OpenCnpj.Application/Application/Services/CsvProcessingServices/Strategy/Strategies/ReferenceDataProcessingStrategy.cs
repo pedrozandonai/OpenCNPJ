@@ -1,9 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
 using CsvHelper;
-using OpenCnpj.Application.Application.Mappers;
 using OpenCnpj.Application.Batches.Domain;
 using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
+using OpenCnpj.Application.MongoApplicationCollections.Mappers;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using OpenCnpj.Core.Helpers;

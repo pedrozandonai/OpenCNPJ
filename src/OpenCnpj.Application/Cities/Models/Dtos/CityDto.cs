@@ -1,3 +1,5 @@
-﻿namespace OpenCnpj.Application.Cities.Models.Dtos;
+﻿using OpenCnpj.Application.BaseRecords.Models;
 
-public record CityDto(int ID, string Description);
+namespace OpenCnpj.Application.Cities.Models.Dtos;
+
+public record CityDto : BaseRecordDto;

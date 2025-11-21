@@ -1,3 +1,5 @@
-﻿namespace OpenCnpj.Application.LegalNatures.Models.Dtos;
+﻿using OpenCnpj.Application.BaseRecords.Models;
 
-public record LegalNatureDto(int ID, string Description);
+namespace OpenCnpj.Application.LegalNatures.Models.Dtos;
+
+public record LegalNatureDto : BaseRecordDto;

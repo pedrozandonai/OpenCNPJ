@@ -1,4 +1,5 @@
 ﻿using MongoDB.Driver;
+using OpenCnpj.Application.BaseRecords.Models;
 using OpenCnpj.Application.MongoApplicationCollections.Collections;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
 using OpenCnpj.Core.Database.Factory.Interfaces;
@@ -6,7 +7,7 @@ using OpenCnpj.Core.Database.Factory.Interfaces;
 namespace OpenCnpj.Application.MongoApplicationCollections.Extensions;
 public static class CollectionsBaseExtension
 {
-    public static async Task<List<T>> GetFilteredCollectionBase<T>(this IMongoDatabaseFactory mongoDatabaseFactory, int? code = null, string? description = null, CancellationToken cancellationToken = default) where T : CollectionBase, IMongoApplicationCollection
+    public static async Task<List<T>> GetFilteredCollectionBase<T>(this IMongoDatabaseFactory mongoDatabaseFactory, int? code = null, string? description = null, int? page = 1, int? limit = 25, CancellationToken cancellationToken = default) where T : CollectionBase, IMongoApplicationCollection
     {
         var collectionName = ((IMongoApplicationCollection)Activator.CreateInstance(typeof(T))).CollectionName;
 
@@ -27,6 +28,26 @@ public static class CollectionsBaseExtension
 
         return await filteredCollectionBase
             .Find(finalFilter)
+            .Skip((page - 1) * limit)
+            .Limit(limit)
             .ToListAsync(cancellationToken);
+    }
+
+    public static TDto CreateDtoByCollectionBase<TCollection, TDto>(this TCollection? collectionRecord)
+        where TCollection : CollectionBase, IMongoApplicationCollection
+        where TDto : BaseRecordDto, new()
+    {
+        if (collectionRecord == null)
+            return new TDto
+            {
+                ID = default,
+                Description = string.Empty
+            };
+
+        return new TDto
+        {
+            ID = int.Parse(collectionRecord.Code),
+            Description = collectionRecord.Description
+        };
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using OpenCnpj.Application.Companies.Commands;
+using OpenCnpj.Application.Companies.Companies.Commands;
 using OpenCnpj.Core;
 
 namespace OpenCnpj.WebApi.Controllers;
@@ -18,7 +18,7 @@ public class CompaniesController(IMediator mediator) : CustomControllerBase
         if (result.IsFailure)
             return BadRequest("An error occured while trying to return the companies by the filters.", result.Error);
 
-        if (!result.Value.Any())
+        if (!result.Value.Data.Any())
             return NotFound("Unable to find any companies with the informed filters.");
 
         return Ok(result.Value);
