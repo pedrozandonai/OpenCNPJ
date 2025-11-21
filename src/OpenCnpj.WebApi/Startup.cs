@@ -12,6 +12,7 @@ public class Startup(IConfiguration configuration)
             .AddConfigurations(configuration)
             .AddBackgrounds(configuration)
             .AddDatabase(configuration)
+            .AddRateLimitersInjection(configuration)
             .AddMediator()
             .AddRepositories()
             .AddQueries()
@@ -34,6 +35,7 @@ public class Startup(IConfiguration configuration)
     public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         app.UseRouting();
+        app.UseRateLimiter();
 
         if (env.IsDevelopment())
         {

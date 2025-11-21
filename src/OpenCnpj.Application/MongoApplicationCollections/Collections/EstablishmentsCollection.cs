@@ -14,6 +14,7 @@ public class EstablishmentsCollection : IMongoApplicationCollection
     public string OrderCnpj { get; set; } = string.Empty;
     public string CheckDigitCnpj { get; set; } = string.Empty;
     public short HeadOfficeOrBranch { get; set; }
+    [MongoIndex(unique: true)]
     public string TradeName { get; set; } = string.Empty;
     public string RegistrationStatus { get; set; } = string.Empty;
     public DateTime? RegistrationStatusDate { get; set; }

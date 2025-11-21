@@ -11,6 +11,7 @@ public class CompaniesCollection : IMongoApplicationCollection
 
     [MongoIndex(unique: true)]
     public string BasicCnpj { get; set; } = string.Empty;
+    [MongoIndex(unique: true)]
     public string CorporateName { get; set; } = string.Empty;
     public int LegalNatureCode { get; set; }
     public int ResponsibleQualification { get; set; }
