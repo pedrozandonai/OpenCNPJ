@@ -1,11 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.Application.Application.Commands;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Core;
 
 namespace OpenCnpj.Application.Application.Handlers;
-public class PostManualApplicationScrapperCommandHandler(IBatchService batchService, IOpenCnpjScrapperService openCnpjScrapperService) : IRequestHandler<PostManualApplicationScrapperCommand, Result>
+public class PostManualApplicationScrapperCommandHandler(IBatchFileService batchService, IOpenCnpjScrapperService openCnpjScrapperService) : IRequestHandler<PostManualApplicationScrapperCommand, Result>
 {
     public async Task<Result> Handle(PostManualApplicationScrapperCommand request, CancellationToken cancellationToken)
     {

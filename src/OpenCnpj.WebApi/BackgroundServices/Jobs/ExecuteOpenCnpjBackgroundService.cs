@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.WebApi.BackgroundServices.Abstractions;
 
@@ -14,7 +14,7 @@ public class ExecuteOpenCnpjBackgroundService(IOptions<BackgroundJobSettings> op
     {
         using var scope = serviceProvider.CreateAsyncScope();
 
-        var batchService = scope.ServiceProvider.GetRequiredService<IBatchService>();
+        var batchService = scope.ServiceProvider.GetRequiredService<IBatchFileService>();
         var openCnpjScrapperService = scope.ServiceProvider.GetRequiredService<IOpenCnpjScrapperService>();
 
         var batchIdentifier = DateTime.Now.ToString("yyyy-MM");

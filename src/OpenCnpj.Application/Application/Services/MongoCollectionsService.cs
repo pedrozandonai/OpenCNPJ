@@ -1,12 +1,12 @@
 ﻿using CSharpFunctionalExtensions;
 using MongoDB.Driver;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Domain;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 
 namespace OpenCnpj.Application.Application.Services;
-public class MongoCollectionsService(IBatchService batchService, IMongoDatabaseFactory mongoDatabaseFactory) : IMongoCollectionsService
+public class MongoCollectionsService(IBatchFileService batchService, IMongoDatabaseFactory mongoDatabaseFactory) : IMongoCollectionsService
 {
     public async Task<Result> RenameTemporaryCollections(Batch batch, CancellationToken cancellationToken)
     {

@@ -1,8 +1,8 @@
 ﻿using Dapper;
-using OpenCnpj.Application.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 
-namespace OpenCnpj.Application.Batches.Repositories;
+namespace OpenCnpj.Application.Batches.Batches.Repositories;
 public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepository
 {
     public async Task<int> Insert(Batch batch, CancellationToken cancellationToken)

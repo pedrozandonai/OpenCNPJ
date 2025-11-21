@@ -1,22 +1,24 @@
 ﻿using CSharpFunctionalExtensions;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Domain;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.BatchFiles.Domain;
 using System.IO.Compression;
+using System.Threading.Channels;
 using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.Application.Application.Services;
 
-public class FileExtractionService(IBatchService batchService, ILogger logger) : IFileExtractionService
+public class FileExtractionService(IBatchFileService batchService, ILogger logger) : IFileExtractionService
 {
-    public async Task<Result> ExtractFiles(Batch batch, CancellationToken cancellationToken)
+    public async Task<Result> ExtractFilesIncremental(
+        Batch batch,
+        Channel<BatchFile> downloadedFilesChannel,
+        Channel<BatchFile> extractedFilesChannel,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var startProcessingFilesResult = await batchService.UpdateBatch(batch, batch.StartExtractingFiles, cancellationToken);
-            if (startProcessingFilesResult.IsFailure)
-                return startProcessingFilesResult;
-
             var verificationResult = batch.VerifyIfDirectoryExists();
             if (verificationResult.IsFailure)
             {
@@ -28,27 +30,34 @@ public class FileExtractionService(IBatchService batchService, ILogger logger) :
                 if (updateBatchResult.IsFailure)
                     return updateBatchResult;
 
+                extractedFilesChannel.Writer.Complete();
+
                 return verificationResult;
             }
 
             var extractedDirectory = batch.GetExtractedDirectoryByBatch();
-
             if (!Directory.Exists(extractedDirectory))
                 Directory.CreateDirectory(extractedDirectory);
 
-            var zipFiles = Directory.GetFiles(Path.Combine(batch.Directory!, "raw"), "*.zip");
+            int extractedCount = 0;
 
-            if (zipFiles.Length == 0)
-                return Result.Failure("No ZIP files found to extract");
-
-            logger.Information("Found {0} ZIP files to extract", zipFiles.Length);
-
-            var tasks = zipFiles.Select(async (zipFile) =>
+            // Processa arquivos conforme eles chegam do canal de downloads
+            await foreach (var batchFiile in downloadedFilesChannel.Reader.ReadAllAsync(cancellationToken))
             {
-                await ExtractZipFile(zipFile, extractedDirectory, cancellationToken);
-            });
+                var extractedFile = await ExtractZipFile(batchFiile, extractedDirectory, cancellationToken);
 
-            await Task.WhenAll(tasks);
+                if (!string.IsNullOrEmpty(extractedFile))
+                {
+                    // Notifica que o arquivo foi extraído e está pronto para processamento
+                    await extractedFilesChannel.Writer.WriteAsync(extractedFile, cancellationToken);
+                    extractedCount++;
+                }
+            }
+
+            // Sinaliza que não há mais extrações
+            extractedFilesChannel.Writer.Complete();
+
+            logger.Information("Extracted {0} files", extractedCount);
 
             var setOperationSuccessResult = await batchService.UpdateBatch(batch, batch.SetOperationSuccess, cancellationToken);
             if (setOperationSuccessResult.IsFailure)
@@ -59,41 +68,49 @@ public class FileExtractionService(IBatchService batchService, ILogger logger) :
         catch (Exception ex)
         {
             logger.Error(ex, "Error extracting files for batch {0}", batch.ID);
-
             return Result.Failure($"Error extracting files: {ex.Message}");
         }
     }
 
-    private async Task ExtractZipFile(string zipFile, string extractedDirectory, CancellationToken cancellationToken)
+    private async Task<string?> ExtractZipFile(BatchFile batchFile, string extractedDirectory, CancellationToken cancellationToken)
     {
-        var fileName = Path.GetFileName(zipFile);
+        var fileName = Path.GetFileName(batchFile.FilePath);
         var baseName = Path.GetFileNameWithoutExtension(fileName);
 
-        await Task.Run(() =>
+        return await Task.Run(() =>
         {
-            logger.Information("Extracting: {0}", fileName);
-
-            using (var archive = ZipFile.OpenRead(zipFile))
+            try
             {
-                if (archive.Entries.Count == 0)
+                logger.Information("Extracting: {0}", fileName);
+
+                using (var archive = ZipFile.OpenRead(batchFile.FilePath))
                 {
-                    logger.Warning("No files were found in zip: {0}", fileName);
-                    return;
+                    if (archive.Entries.Count == 0)
+                    {
+                        logger.Warning("No files were found in zip: {0}", fileName);
+                        return null;
+                    }
+
+                    var entry = archive.Entries[0];
+                    var targetPath = Path.Combine(extractedDirectory, baseName);
+
+                    if (File.Exists(targetPath))
+                        File.Delete(targetPath);
+
+                    entry.ExtractToFile(targetPath);
+                    logger.Information("File extracted to {0}", targetPath);
+
+                    File.Delete(batchFile.FilePath);
+                    logger.Information("File {0} deleted.", fileName);
+
+                    return targetPath;
                 }
-
-                var entry = archive.Entries[0];
-                var targetPath = Path.Combine(extractedDirectory, baseName);
-
-                if (File.Exists(targetPath))
-                    File.Delete(targetPath);
-
-                entry.ExtractToFile(targetPath);
-
-                logger.Information("File extracted to {0}", targetPath);
             }
-
-            File.Delete(zipFile);
-            logger.Information("File {0} deleted.", fileName);
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Error extracting zip file: {0}", fileName);
+                return null;
+            }
         }, cancellationToken);
     }
 }

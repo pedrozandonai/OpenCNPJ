@@ -1,28 +1,36 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.Application.Batches.Domain;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
+using OpenCnpj.Application.Batches.BatchFiles.Domain;
+using OpenCnpj.Application.Batches.BatchFiles.Repositories;
 using OpenCnpj.Application.Government.Clients.Interfaces;
 using OpenCnpj.Core.Configurations;
 using Polly;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.Application.Government.Clients;
 
-public class GovernmentHttpClient(IBatchService batchService, HttpClient httpClient, GovSetttings govSetttings, TweakSettings tweakSettings, ILogger logger) : IGovernmentHttpClient
+public class GovernmentHttpClient(
+    IBatchFileService batchService,
+    HttpClient httpClient,
+    GovSetttings govSetttings,
+    TweakSettings tweakSettings,
+    IBatchFileRepository batchFileRepository,
+    ILogger logger) : IGovernmentHttpClient
 {
     private readonly ILogger _logger = logger.ForContext<IGovernmentHttpClient>();
 
-    public async Task<Result> DownloadCurrentBatch(Batch batch, CancellationToken cancellationToken)
+    public async Task<Result> DownloadCurrentBatch(
+        Batch batch,
+        Channel<BatchFile> downloadedFilesChannel,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var updateResult = await batchService.UpdateBatch(batch, batch.StartDownloading, cancellationToken);
-            if (updateResult.IsFailure)
-                return updateResult;
-
             string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Identifier);
 
             _logger.Information("Fetching download URLs from: {0}", currentGovDataUrl);
@@ -30,11 +38,14 @@ public class GovernmentHttpClient(IBatchService batchService, HttpClient httpCli
             var response = await httpClient.GetAsync(currentGovDataUrl, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                updateResult = await batchService.UpdateBatch(batch, batch.SetPendingGovernmentBatch, cancellationToken);
+                var updateResult = await batchService.UpdateBatch(batch, batch.SetPendingGovernmentBatch, cancellationToken);
                 if (updateResult.IsFailure)
                     return updateResult;
 
-                _logger.Information("The data from the government could not be found on this batch date: {0}, the next fetch will be at {1}", batch.Identifier, batch.RetryDate!.Value); 
+                _logger.Information("The data from the government could not be found on this batch date: {0}, the next fetch will be at {1}",
+                    batch.Identifier, batch.RetryDate!.Value);
+
+                downloadedFilesChannel.Writer.Complete();
 
                 return Result.Success();
             }
@@ -45,7 +56,10 @@ public class GovernmentHttpClient(IBatchService batchService, HttpClient httpCli
 
             _logger.Information("Found {0} URL's for downloading.", currentCsvUrlsGovData.Count);
 
-            await DownloadFiles(currentCsvUrlsGovData, batch, cancellationToken);
+            await DownloadFiles(currentCsvUrlsGovData, batch, downloadedFilesChannel, cancellationToken);
+
+            // Sinaliza que não há mais downloads
+            downloadedFilesChannel.Writer.Complete();
 
             var setOperationSuccessResult = await batchService.UpdateBatch(batch, batch.SetOperationSuccess, cancellationToken);
             if (setOperationSuccessResult.IsFailure)
@@ -84,7 +98,11 @@ public class GovernmentHttpClient(IBatchService batchService, HttpClient httpCli
         return urls;
     }
 
-    private async Task<Result> DownloadFiles(List<string> urls, Batch batch, CancellationToken cancellationToken)
+    private async Task<Result> DownloadFiles(
+        List<string> urls,
+        Batch batch,
+        Channel<BatchFile> downloadedFilesChannel,
+        CancellationToken cancellationToken)
     {
         if (tweakSettings.DownloadSettings.AmountAtTheSameTime > urls.Count)
         {
@@ -121,6 +139,16 @@ public class GovernmentHttpClient(IBatchService batchService, HttpClient httpCli
                     var filePath = Path.Combine(rawDirectory, fileName);
                     var tempFilePath = filePath + ".partial";
 
+                    var batchFile = BatchFile.Create(fileName, tempFilePath);
+
+                    var batchFileID = await batchFileRepository.Insert(batchFile, cancellationToken);
+                    var setIDResult = batchFile.SetID(batchFileID);
+                    if (setIDResult.IsFailure)
+                    {
+                        _logger.Error("Erro.", fileName);
+                        return;
+                    }
+
                     long existingLength = 0;
                     if (File.Exists(tempFilePath))
                         existingLength = new FileInfo(tempFilePath).Length;
@@ -153,6 +181,18 @@ public class GovernmentHttpClient(IBatchService batchService, HttpClient httpCli
                     File.Move(tempFilePath, filePath);
 
                     _logger.Information("Download finished: {0}", fileName);
+
+                    var setDownloadCompletedResult = batchFile.SetDownloadCompleted(filePath);
+                    if (setDownloadCompletedResult.IsFailure)
+                    {
+                        _logger.Error("Erro.", fileName);
+                        return;
+                    }
+
+                    await batchFileRepository.Update(batchFile, cancellationToken);
+
+                    // Notifica que o arquivo foi baixado e está pronto para extração
+                    await downloadedFilesChannel.Writer.WriteAsync(batchFile, cancellationToken);
                 });
             }
             catch (Exception ex)

@@ -2,8 +2,8 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Factory;
-using OpenCnpj.Application.Batches.Domain;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Core.Configurations;
 using System.Globalization;
 using System.Text;

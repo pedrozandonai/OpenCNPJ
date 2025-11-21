@@ -1,7 +1,7 @@
 ﻿using Dapper;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 
-namespace OpenCnpj.Application.Batches.Queries;
+namespace OpenCnpj.Application.Batches.Batches.Queries;
 
 public class BatchQueries(IDatabaseFactory databaseFactory) : IBatchQueries
 {

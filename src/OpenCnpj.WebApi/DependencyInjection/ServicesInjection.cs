@@ -3,14 +3,14 @@ using OpenCnpj.Application.Application.Services.CsvProcessingServices;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Factory;
 using OpenCnpj.Application.Application.Services.CsvProcessingServices.Strategy.Strategies;
 using OpenCnpj.Application.Application.Services.Interfaces;
-using OpenCnpj.Application.Batches.Services;
+using OpenCnpj.Application.Batches.Batches.Services;
 
 namespace OpenCnpj.WebApi.DependencyInjection;
 public static class ServicesInjection
 {
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddTransient<IBatchService, BatchService>();
+        services.AddTransient<IBatchFileService, BatchFileService>();
         services.AddTransient<IFileExtractionService, FileExtractionService>();
         services.AddTransient<ICsvProcessingService, CsvProcessingService>();
         services.AddTransient<IOpenCnpjScrapperService, OpenCnpjScrapperService>();

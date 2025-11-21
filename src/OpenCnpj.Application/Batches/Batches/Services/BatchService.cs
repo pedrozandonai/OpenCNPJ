@@ -1,14 +1,14 @@
 ﻿using CSharpFunctionalExtensions;
-using OpenCnpj.Application.Batches.Domain;
-using OpenCnpj.Application.Batches.Repositories;
+using OpenCnpj.Application.Batches.Batches.Domain;
+using OpenCnpj.Application.Batches.Batches.Repositories;
 using OpenCnpj.Core.Database.Factory.Interfaces;
 using Serilog;
 
-namespace OpenCnpj.Application.Batches.Services;
+namespace OpenCnpj.Application.Batches.Batches.Services;
 
 public class BatchService(IDatabaseFactory databaseFactory, IBatchRepository batchRepository, ILogger logger) : IBatchService
 {
-    private readonly ILogger _logger = logger.ForContext<BatchService>();
+    private readonly ILogger _logger = logger.ForContext<BatchFileService>();
 
     public async Task<Result<Batch>> GetOrCreateBatchByIdentifier(string batchIdentifier, CancellationToken cancellationToken)
     {
