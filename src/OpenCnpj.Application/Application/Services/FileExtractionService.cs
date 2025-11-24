@@ -9,8 +9,10 @@ using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.Application.Application.Services;
 
-public class FileExtractionService(IBatchFileService batchService, ILogger logger) : IFileExtractionService
+public class FileExtractionService(IBatchService batchService, IBatchFileService batchFileService, ILogger logger) : IFileExtractionService
 {
+    private readonly ILogger _logger = logger.ForContext<FileExtractionService>();
+
     public async Task<Result> ExtractFilesIncremental(
         Batch batch,
         Channel<BatchFile> downloadedFilesChannel,
@@ -22,13 +24,9 @@ public class FileExtractionService(IBatchFileService batchService, ILogger logge
             var verificationResult = batch.VerifyIfDirectoryExists();
             if (verificationResult.IsFailure)
             {
-                var setOperationFailureResult = batch.SetOperationFailure(verificationResult.Error);
-                if (setOperationFailureResult.IsFailure)
-                    return setOperationFailureResult;
-
-                var updateBatchResult = await batchService.UpdateBatch(batch, () => { return setOperationFailureResult; }, cancellationToken);
-                if (updateBatchResult.IsFailure)
-                    return updateBatchResult;
+                var setBatchFileOperationFailureResult = await batchService.UpdateBatch(batch, () => batch.SetOperationFailure(verificationResult.Error), cancellationToken);
+                if (setBatchFileOperationFailureResult.IsFailure)
+                    return setBatchFileOperationFailureResult;
 
                 extractedFilesChannel.Writer.Complete();
 
@@ -41,75 +39,120 @@ public class FileExtractionService(IBatchFileService batchService, ILogger logge
 
             int extractedCount = 0;
 
-            // Processa arquivos conforme eles chegam do canal de downloads
-            await foreach (var batchFiile in downloadedFilesChannel.Reader.ReadAllAsync(cancellationToken))
+            await foreach (var batchFile in downloadedFilesChannel.Reader.ReadAllAsync(cancellationToken))
             {
-                var extractedFile = await ExtractZipFile(batchFiile, extractedDirectory, cancellationToken);
+                var extractedFileResult = await ExtractZipFile(batchFile, extractedDirectory, cancellationToken);
+                if (extractedFileResult.IsFailure)
+                    continue;
 
-                if (!string.IsNullOrEmpty(extractedFile))
-                {
-                    // Notifica que o arquivo foi extraído e está pronto para processamento
-                    await extractedFilesChannel.Writer.WriteAsync(extractedFile, cancellationToken);
-                    extractedCount++;
-                }
+                await extractedFilesChannel.Writer.WriteAsync(extractedFileResult.Value, cancellationToken);
+                extractedCount++;
             }
 
             // Sinaliza que não há mais extrações
             extractedFilesChannel.Writer.Complete();
 
-            logger.Information("Extracted {0} files", extractedCount);
-
-            var setOperationSuccessResult = await batchService.UpdateBatch(batch, batch.SetOperationSuccess, cancellationToken);
-            if (setOperationSuccessResult.IsFailure)
-                return setOperationSuccessResult;
+            _logger.Information("Extracted {0} files", extractedCount);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Error extracting files for batch {0}", batch.ID);
+            _logger.Error(ex, "Error extracting files for batch {0}", batch.ID);
             return Result.Failure($"Error extracting files: {ex.Message}");
         }
     }
 
-    private async Task<string?> ExtractZipFile(BatchFile batchFile, string extractedDirectory, CancellationToken cancellationToken)
+    private async Task<Result<BatchFile>> ExtractZipFile(BatchFile batchFile, string extractedDirectory, CancellationToken cancellationToken)
     {
+        var setBatchFileStatusToExtractingResult = await batchFileService.UpdateBatchFile(batchFile, batchFile.StartExtractingFile, cancellationToken);
+        if (setBatchFileStatusToExtractingResult.IsFailure)
+            return Result.Failure<BatchFile>(setBatchFileStatusToExtractingResult.Error);
+
         var fileName = Path.GetFileName(batchFile.FilePath);
         var baseName = Path.GetFileNameWithoutExtension(fileName);
 
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
+            BatchFile? currentZipBatchFile = null;
+            BatchFile? currentExtractedBatchFile = null;
+
             try
             {
+                currentZipBatchFile = batchFile;
+
                 logger.Information("Extracting: {0}", fileName);
 
                 using (var archive = ZipFile.OpenRead(batchFile.FilePath))
                 {
                     if (archive.Entries.Count == 0)
                     {
-                        logger.Warning("No files were found in zip: {0}", fileName);
-                        return null;
+                        _logger.Warning("No files were found in zip: {0}", fileName);
+
+                        return Result.Failure<BatchFile>("No files were found in zip.");
                     }
 
                     var entry = archive.Entries[0];
                     var targetPath = Path.Combine(extractedDirectory, baseName);
 
+                    var extractedBatchFileCreationResult = await batchFileService.CreateExtractedBatchFile(batchFile, targetPath, cancellationToken);
+                    if (extractedBatchFileCreationResult.IsFailure)
+                    {
+                        _logger.Error(extractedBatchFileCreationResult.Error);
+                        return Result.Failure<BatchFile>(extractedBatchFileCreationResult.Error);
+                    }
+
+                    currentExtractedBatchFile = extractedBatchFileCreationResult.Value;
+
                     if (File.Exists(targetPath))
                         File.Delete(targetPath);
 
                     entry.ExtractToFile(targetPath);
-                    logger.Information("File extracted to {0}", targetPath);
-
-                    File.Delete(batchFile.FilePath);
-                    logger.Information("File {0} deleted.", fileName);
-
-                    return targetPath;
+                    _logger.Information("File extracted to {0}", targetPath);
                 }
+
+                var setZipBatchFileSuccessResult = await batchFileService.UpdateBatchFile(currentZipBatchFile, () => currentZipBatchFile.SetExtranctionCompleted(), cancellationToken);
+                if (setZipBatchFileSuccessResult.IsFailure)
+                {
+                    _logger
+                    .ForContext("zipBatchFile", currentZipBatchFile, true)
+                    .Error("Unable to update the zip batch file operation status to success. Error: {0}", setZipBatchFileSuccessResult.Error);
+                }
+
+                _logger
+                .ForContext("currentZipBatchFile", currentZipBatchFile, true)
+                .ForContext("currentExtractedBatchFile", currentExtractedBatchFile, true)
+                .Information("Successfully extracted file {0} and deleted zip file {1}", currentExtractedBatchFile.FileName, currentZipBatchFile.FileName);
+
+                return Result.Success(currentExtractedBatchFile);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Error extracting zip file: {0}", fileName);
-                return null;
+                _logger.Error(ex, "Error extracting zip file: {0}", fileName);
+
+                if (currentZipBatchFile != null)
+                {
+                    var setZipBatchFileFailureResult = await batchFileService.UpdateBatchFile(currentZipBatchFile, () => currentZipBatchFile.SetOperationFailure(ex.Message), cancellationToken);
+                    if (setZipBatchFileFailureResult.IsFailure)
+                    {
+                        _logger
+                        .ForContext("zipBatchFile", currentZipBatchFile, true)
+                        .Error(ex, "Unable to update the zip batch file operation status to failure. Error: {0}", setZipBatchFileFailureResult.Error);
+                    }
+                }
+
+                if (currentExtractedBatchFile != null)
+                {
+                    var setExtractedBatchFileFailureResult = await batchFileService.UpdateBatchFile(currentExtractedBatchFile, () => currentExtractedBatchFile.SetOperationFailure(ex.Message), cancellationToken);
+                    if (setExtractedBatchFileFailureResult.IsFailure)
+                    {
+                        _logger
+                        .ForContext("extractedBatchFile", currentExtractedBatchFile, true)
+                        .Error(ex, "Unable to update the extracted batch file operation status to failure. Error: {0}", setExtractedBatchFileFailureResult.Error);
+                    }
+                }
+
+                return Result.Failure<BatchFile>("Error extracting zip file.");
             }
         }, cancellationToken);
     }

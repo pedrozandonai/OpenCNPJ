@@ -4,13 +4,9 @@ using System.Data;
 using System.Data.Common;
 
 namespace OpenCnpj.Core.Database.Factory;
-public class DatabaseFactory : IDatabaseFactory
+public class DatabaseFactory : IDatabaseFactory, IDisposable
 {
     private readonly string _connectionString;
-    private DbConnection? _connection;
-    private DbTransaction? _transaction;
-    private bool _openTransaction;
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private bool _disposed;
 
     public DatabaseFactory(string connectionString)
@@ -23,175 +19,46 @@ public class DatabaseFactory : IDatabaseFactory
 
     public string ConnectionString => _connectionString;
 
-    public IDbConnection Connection
+    /// <summary>
+    /// Creates and opens a NEW SQLite connection (stateless).
+    /// </summary>
+    public IDbConnection CreateConnection()
     {
-        get
-        {
-            EnsureConnectionOpen();
-            return _connection!;
-        }
+        var conn = new SqliteConnection(_connectionString);
+        conn.Open();
+        ApplyPragma(conn);
+        return conn;
     }
 
-    public IDbTransaction? Transaction => _transaction;
-
-    protected DbConnection CreateConnection()
+    /// <summary>
+    /// Creates and opens a NEW SQLite connection asynchronously (stateless).
+    /// </summary>
+    public async Task<IDbConnection> CreateConnectionAsync()
     {
-        return new SqliteConnection(ConnectionString);
+        var conn = new SqliteConnection(_connectionString);
+        await conn.OpenAsync();
+        await ApplyPragmaAsync(conn);
+        return conn;
     }
 
-    protected void OnConnectionOpened(DbConnection connection)
+    private void ApplyPragma(DbConnection connection)
     {
         using var command = connection.CreateCommand();
         command.CommandText = "pragma busy_timeout = 5000;";
         command.ExecuteNonQuery();
     }
 
-    protected async Task OnConnectionOpenedAsync(DbConnection connection)
+    private async Task ApplyPragmaAsync(DbConnection connection)
     {
         using var command = connection.CreateCommand();
         command.CommandText = "pragma busy_timeout = 5000;";
         await command.ExecuteNonQueryAsync();
     }
 
-    private void EnsureConnectionOpen()
-    {
-        if (_connection == null || _connection.State != ConnectionState.Open)
-        {
-            _semaphore.Wait();
-            try
-            {
-                if (_connection == null || _connection.State != ConnectionState.Open)
-                {
-                    if (_connection != null && _connection.State == ConnectionState.Closed)
-                    {
-                        _connection.Dispose();
-                        _connection = null;
-                    }
-
-                    _connection = CreateConnection();
-                    _connection.Open();
-                    OnConnectionOpened(_connection);
-                }
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
-        }
-    }
-
-    private async Task EnsureConnectionOpenAsync()
-    {
-        if (_connection == null || _connection.State != ConnectionState.Open)
-        {
-            await _semaphore.WaitAsync();
-            try
-            {
-                if (_connection == null || _connection.State != ConnectionState.Open)
-                {
-                    if (_connection != null && _connection.State == ConnectionState.Closed)
-                    {
-                        _connection.Dispose();
-                        _connection = null;
-                    }
-
-                    _connection = CreateConnection();
-                    await _connection.OpenAsync();
-                    await OnConnectionOpenedAsync(_connection);
-                }
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
-        }
-    }
-
-    public void Begin(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
-    {
-        if (_openTransaction)
-            throw new InvalidOperationException("A transaction is already active.");
-
-        EnsureConnectionOpen();
-        _transaction = _connection!.BeginTransaction(isolationLevel);
-        _openTransaction = true;
-    }
-
-    public async Task BeginAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
-    {
-        if (_openTransaction)
-            throw new InvalidOperationException("A transaction is already active.");
-
-        await EnsureConnectionOpenAsync();
-        _transaction = await _connection!.BeginTransactionAsync(isolationLevel);
-        _openTransaction = true;
-    }
-
-    public void Commit()
-    {
-        if (_transaction == null)
-            throw new InvalidOperationException("No active transaction to commit.");
-
-        _transaction.Commit();
-        _openTransaction = false;
-    }
-
-    public async Task CommitAsync()
-    {
-        if (_transaction == null)
-            throw new InvalidOperationException("No active transaction to commit.");
-
-        await _transaction.CommitAsync();
-        _openTransaction = false;
-    }
-
-    public void Rollback()
-    {
-        if (_transaction == null)
-            throw new InvalidOperationException("No active transaction to rollback.");
-
-        _transaction.Rollback();
-        _openTransaction = false;
-    }
-
-    public async Task RollbackAsync()
-    {
-        if (_transaction == null)
-            throw new InvalidOperationException("No active transaction to rollback.");
-
-        await _transaction.RollbackAsync();
-        _openTransaction = false;
-    }
-
     public void Dispose()
     {
         if (_disposed)
             return;
-
-        if (_openTransaction && _transaction != null)
-        {
-            try
-            {
-                _transaction.Rollback();
-            }
-            catch
-            {
-                // Suppress exceptions during dispose
-            }
-        }
-
-        _transaction?.Dispose();
-
-        if (_connection != null)
-        {
-            if (_connection.State == ConnectionState.Open)
-            {
-                _connection.Close();
-            }
-            _connection.Dispose();
-        }
-
-        _semaphore?.Dispose();
 
         _disposed = true;
     }

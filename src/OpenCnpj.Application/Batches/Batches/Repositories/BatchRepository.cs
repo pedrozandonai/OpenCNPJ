@@ -7,55 +7,89 @@ public class BatchRepository(IDatabaseFactory databaseFactory) : IBatchRepositor
 {
     public async Task<int> Insert(Batch batch, CancellationToken cancellationToken)
     {
-        const string sql = @"INSERT INTO batches (identifier,
+        const string sql = @"INSERT INTO batches (period,
                                                   operation,
                                                   operation_status,
                                                   operation_failure_description,
                                                   directory,
-                                                  retry_date)
-                                          VALUES (@Identifier,
+                                                  retry_date,
+                                                  created_at,
+                                                  finished_at)
+                                          VALUES (@Period,
                                                   @Operation,
                                                   @OperationStatus,
                                                   @OperationFailureDescription,
                                                   @Directory,
-                                                  @RetryDate)
+                                                  @RetryDate,
+                                                  @CreatedAt,
+                                                  @FinishedAt)
                                        RETURNING id";
 
-        var command = new CommandDefinition(sql, batch, transaction: databaseFactory.Transaction, cancellationToken:cancellationToken);
+        using var conn = await databaseFactory.CreateConnectionAsync();
 
-        return await databaseFactory.Connection.ExecuteScalarAsync<int>(command);
+        var command = new CommandDefinition(sql, batch, cancellationToken:cancellationToken);
+
+        return await conn.ExecuteScalarAsync<int>(command);
     }
 
     public async Task Update(Batch batch, CancellationToken cancellationToken)
     {
         const string sql = @"UPDATE batches
-                                SET identifier = @Identifier,
+                                SET period = @Period,
                                     operation = @Operation,
                                     operation_status = @OperationStatus,
                                     operation_failure_description = @OperationFailureDescription,
                                     directory = @Directory,
-                                    retry_date = @RetryDate
+                                    retry_date = @RetryDate,
+                                    finished_at = @FinishedAt
                               WHERE id = @ID";
 
-        var command = new CommandDefinition(sql, batch, transaction: databaseFactory.Transaction, cancellationToken: cancellationToken);
+        using var conn = await databaseFactory.CreateConnectionAsync();
 
-        await databaseFactory.Connection.ExecuteAsync(command);
+        var command = new CommandDefinition(sql, batch, cancellationToken: cancellationToken);
+
+        await conn.ExecuteAsync(command);
     }
 
-    public async Task<Batch?> GetBatchByIdentifier(string identifier, CancellationToken cancellationToken)
+    public async Task<Batch?> GetBatchByPeriod(string period, CancellationToken cancellationToken)
     {
         const string sql = @"SELECT id AS ID,
-                                    identifier AS Identifier,
+                                    period AS Period,
                                     operation AS Operation,
                                     operation_status AS OperationStatus,
                                     operation_failure_description AS OperationFailureDescription,
                                     directory AS Directory,
-                                    retry_date AS RetryDate
+                                    retry_date AS RetryDate,
+                                    created_at AS CreatedAt,
+                                    finished_at AS FinishedAt
                                FROM batches
-                              WHERE identifier = @identifier";
+                              WHERE period = @period";
 
-        var command = new CommandDefinition(sql, new { identifier }, transaction: databaseFactory.Transaction, cancellationToken: cancellationToken);
+        using var conn = await databaseFactory.CreateConnectionAsync();
 
-        return await databaseFactory.Connection.QueryFirstOrDefaultAsync<Batch>(command);
+        var command = new CommandDefinition(sql, new { period }, cancellationToken: cancellationToken);
+
+        return await conn.QueryFirstOrDefaultAsync<Batch>(command);
+    }
+
+    public async Task<Batch?> GetByID(int id, CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    period AS Period,
+                                    operation AS Operation,
+                                    operation_status AS OperationStatus,
+                                    operation_failure_description AS OperationFailureDescription,
+                                    directory AS Directory,
+                                    retry_date AS RetryDate,
+                                    created_at AS CreatedAt,
+                                    finished_at AS FinishedAt
+                               FROM batches
+                              WHERE id = @id";
+
+        using var conn = await databaseFactory.CreateConnectionAsync();
+
+        var command = new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken);
+
+        return await conn.QueryFirstOrDefaultAsync<Batch>(command);
     }
 }

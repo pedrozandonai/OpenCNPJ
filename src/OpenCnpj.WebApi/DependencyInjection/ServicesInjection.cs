@@ -10,6 +10,7 @@ public static class ServicesInjection
 {
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
+        services.AddTransient<IBatchService, BatchService>();
         services.AddTransient<IBatchFileService, BatchFileService>();
         services.AddTransient<IFileExtractionService, FileExtractionService>();
         services.AddTransient<ICsvProcessingService, CsvProcessingService>();

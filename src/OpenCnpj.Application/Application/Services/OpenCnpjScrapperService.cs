@@ -10,27 +10,19 @@ using Serilog;
 using System.Threading.Channels;
 
 namespace OpenCnpj.Application.Application.Services;
-public class OpenCnpjScrapperService(IBatchFileService batchService, IGovernmentHttpClient governmentHttpClient, IFileExtractionService fileExtractionService, ICsvProcessingService csvProcessingService, IMongoCollectionsService mongoCollectionsService, ILogger logger) : IOpenCnpjScrapperService
+public class OpenCnpjScrapperService(IBatchService batchService, IGovernmentHttpClient governmentHttpClient, IFileExtractionService fileExtractionService, ICsvProcessingService csvProcessingService, IMongoCollectionsService mongoCollectionsService, ILogger logger) : IOpenCnpjScrapperService
 {
     private readonly ILogger _logger = logger.ForContext<OpenCnpjScrapperService>();
 
     public async Task<Result> ExecuteAsync(Batch batch, CancellationToken cancellationToken)
     {
-        var pipelineResult = await ExecuteIncrementalPipeline(batch, cancellationToken);
-        if (pipelineResult.IsFailure)
-            return pipelineResult;
-
-        bool finished = false;
+        bool finished = batch.Operation == EBatchOperation.Finished;
         while (!finished)
         {
             var nextBatchOperationResult = batch.GetBatchNextOperation();
             if (nextBatchOperationResult.IsFailure)
             {
-                var setOperationFailureResult = batch.SetOperationFailure(nextBatchOperationResult.Error);
-                if (setOperationFailureResult.IsFailure)
-                    return setOperationFailureResult;
-
-                var setFinishedBatchResult = await batchService.UpdateBatch(batch, () => { return setOperationFailureResult; }, cancellationToken);
+                var setFinishedBatchResult = await batchService.UpdateBatch(batch, () => batch.SetOperationFailure(nextBatchOperationResult.Error), cancellationToken);
                 if (setFinishedBatchResult.IsFailure)
                     return setFinishedBatchResult;
 
@@ -40,10 +32,12 @@ public class OpenCnpjScrapperService(IBatchFileService batchService, IGovernment
             switch (nextBatchOperationResult.Value)
             {
                 case EBatchOperation.PendingGovernmentBatch:
-                    if (!batch.RetryDate.HasValue)
-                        return Result.Failure("The batch is missing the retry date.");
-
-                    await Task.Delay(DateTime.Now - batch.RetryDate.Value, cancellationToken);
+                    return Result.Success();
+                    
+                case EBatchOperation.StartGovernmentPipeline:
+                    var pipelineResult = await ExecuteIncrementalPipeline(batch, cancellationToken);
+                    if (pipelineResult.IsFailure)
+                        return pipelineResult;
                     break;
 
                 case EBatchOperation.RenamingMongoCollections:
@@ -66,8 +60,19 @@ public class OpenCnpjScrapperService(IBatchFileService batchService, IGovernment
         return Result.Success();
     }
 
+    //TODO: Aqui eu preciso pegar todos os batch files do batch passado por parâmetro e ver se eles existem primeiro, se existirem e tiverem com erro tem que retentar.
     private async Task<Result> ExecuteIncrementalPipeline(Batch batch, CancellationToken cancellationToken)
     {
+        var setBatchToGovernmentPipelineResult = await batchService.UpdateBatch(batch, batch.StartStartGovernmentPipeline, cancellationToken);
+        if (setBatchToGovernmentPipelineResult.IsFailure)
+        {
+            _logger
+                .ForContext("batch", batch, true)
+                .Error("Unable to start government pipeline operation. Error: {0}", setBatchToGovernmentPipelineResult.Error);
+
+            return Result.Failure(setBatchToGovernmentPipelineResult.Error);
+        }
+
         // Canais para comunicação entre etapas do pipeline
         var downloadedFilesChannel = Channel.CreateUnbounded<BatchFile>(new UnboundedChannelOptions
         {
@@ -129,12 +134,21 @@ public class OpenCnpjScrapperService(IBatchFileService batchService, IGovernment
         // Verifica se todas as etapas foram bem-sucedidas
         if (results.All(r => r.IsSuccess))
         {
+            var setFinishedBatchResult = await batchService.UpdateBatch(batch, batch.SetGovernmentPipelineFinished, cancellationToken);
+            if (setFinishedBatchResult.IsFailure)
+                return setFinishedBatchResult;
+
             _logger.Information("Incremental pipeline completed successfully");
+
             return Result.Success();
         }
 
         var errors = string.Join("; ", results.Where(r => !r.IsSuccess).Select(r => r.Error));
         _logger.Error("Incremental pipeline failed: {0}", errors);
+
+        var setBatchOperationFailureResult = await batchService.UpdateBatch(batch, () => batch.SetOperationFailure(errors), cancellationToken);
+        if (setBatchOperationFailureResult.IsFailure)
+            return setBatchOperationFailureResult;
 
         return Result.Failure(errors);
     }

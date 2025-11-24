@@ -5,9 +5,19 @@ using ILogger = Serilog.ILogger;
 
 namespace OpenCnpj.WebApi.BackgroundServices.Services;
 
-public class BackgroundJobSchedulerService(IServiceProvider serviceProvider, BackgroundSettings settings, ILogger logger) : BackgroundService
+public class BackgroundJobSchedulerService(IServiceProvider serviceProvider, BackgroundSettings settings, ILogger logger, IHostApplicationLifetime lifetime) : BackgroundService
 {
     private readonly ILogger _logger = logger.ForContext<BackgroundJobSchedulerService>();
+
+    public override Task StartAsync(CancellationToken cancellationToken)
+    {
+        lifetime.ApplicationStarted.Register(() =>
+        {
+            _ = Task.Run(() => ExecuteAsync(cancellationToken), cancellationToken);
+        });
+
+        return Task.CompletedTask;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

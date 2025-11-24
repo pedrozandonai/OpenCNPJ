@@ -8,12 +8,14 @@ namespace OpenCnpj.Application.Batches.Batches.Domain;
 public class Batch
 {
     public int ID { get; private set; }
-    public string Identifier { get; private set; }
+    public string Period { get; private set; }
     public EBatchOperation Operation { get; private set; }
     public EOperationStatus OperationStatus { get; private set; }
     public string? OperationFailureDescription { get; private set; }
     public string? Directory { get; private set; }
     public DateTime? RetryDate { get; private set; }
+    public DateTime CreatedAt { get; init; }
+    public DateTime? FinishedAt { get; private set; }
 
     [ExcludeFromCodeCoverage]
     private Batch()
@@ -21,19 +23,21 @@ public class Batch
         // TODO: Por algum motivo, o dapper ta mapeando errado os enums, descobrir pq depois.
     }
 
-    private Batch(int id, string identifier, EBatchOperation operation, EOperationStatus operationStatus, string? operationFailureDescription, string? directory, DateTime? retryDate)
+    private Batch(int id, string period, EBatchOperation operation, EOperationStatus operationStatus, string? operationFailureDescription, string? directory, DateTime? retryDate, DateTime createdAt, DateTime? finishedAt)
     {
         ID = id;
-        Identifier = identifier;
+        Period = period;
         Operation = operation;
         OperationStatus = operationStatus;
         OperationFailureDescription = operationFailureDescription;
         Directory = directory;
         RetryDate = retryDate;
+        CreatedAt = createdAt;
+        FinishedAt = finishedAt;
     }
 
-    public static Batch Create(string identifier)
-        => new(0, identifier, EBatchOperation.Created, EOperationStatus.Success, null, null, null);
+    public static Batch Create(string period)
+        => new(0, period, EBatchOperation.Created, EOperationStatus.Success, null, null, null, DateTime.Now, null);
 
     public void SetID(int id)
         => ID = id;
@@ -47,7 +51,7 @@ public class Batch
     {
         try
         {
-            var directory = Path.Combine(Paths.GovDataFolder, Identifier);
+            var directory = Path.Combine(Paths.GovDataFolder, Period);
 
             if (!System.IO.Directory.Exists(directory))
                 System.IO.Directory.CreateDirectory(directory);
@@ -110,21 +114,18 @@ public class Batch
         EBatchOperation? nextBatchOperation = null;
         switch (Operation)
         {
-            case EBatchOperation.Created or EBatchOperation.PendingGovernmentBatch:
-                nextBatchOperation = EBatchOperation.RenamingMongoCollections;
+            case EBatchOperation.Created:
+                nextBatchOperation = EBatchOperation.StartGovernmentPipeline;
                 break;
 
-            //case EBatchOperation.DownloadingFiles:
-            //    nextBatchOperation = EBatchOperation.ExtractingFiles;
-            //    break;
+            case EBatchOperation.PendingGovernmentBatch:
+                if (DateTime.Now >= RetryDate)
+                    nextBatchOperation = EBatchOperation.StartGovernmentPipeline;
+                break;
 
-            //case EBatchOperation.ExtractingFiles:
-            //    nextBatchOperation = EBatchOperation.ProcessingCSVFiles;
-            //    break;
-
-            //case EBatchOperation.ProcessingCSVFiles:
-            //    nextBatchOperation = EBatchOperation.RenamingMongoCollections;
-            //    break;
+            case EBatchOperation.StartGovernmentPipeline:
+                nextBatchOperation = EBatchOperation.RenamingMongoCollections;
+                break;
 
             case EBatchOperation.RenamingMongoCollections:
                 nextBatchOperation = EBatchOperation.Finished;
@@ -137,11 +138,36 @@ public class Batch
         return Result.Success(nextBatchOperation.Value);
     }
 
+    public Result StartStartGovernmentPipeline()
+    {
+        var operation = EBatchOperation.StartGovernmentPipeline;
+
+        if (!IsInCurrentOperationError(operation) && (Operation != EBatchOperation.Created || Operation != EBatchOperation.PendingGovernmentBatch) && OperationStatus != EOperationStatus.Success)
+            return Result.Failure("Cannot start handling the government files in the current batch operation and operation status.");
+
+        Operation = operation;
+        OperationStatus = EOperationStatus.InOperation;
+
+        return Result.Success();
+    }
+
+    public Result SetGovernmentPipelineFinished()
+    {
+        if (Operation != EBatchOperation.StartGovernmentPipeline && OperationStatus != EOperationStatus.Success)
+            return Result.Failure("Cannot set the government pipeline to finished.");
+
+        var setOperationSuccessResult = SetOperationSuccess();
+        if (setOperationSuccessResult.IsFailure)
+            return setOperationSuccessResult;
+
+        return Result.Success();
+    }
+
     public Result StartRenamingMongoCollections()
     {
         var operation = EBatchOperation.RenamingMongoCollections;
 
-        if (!IsInCurrentOperationError(operation) && Operation != EBatchOperation.Created && OperationStatus != EOperationStatus.Success)
+        if (!IsInCurrentOperationError(operation) && Operation != EBatchOperation.StartGovernmentPipeline && OperationStatus != EOperationStatus.Success)
             return Result.Failure("Cannot start renaming the mongo collections in the current batch operation and operation status.");
 
         Operation = operation;
@@ -157,8 +183,12 @@ public class Batch
         if (!IsInCurrentOperationError(operation) && Operation != EBatchOperation.RenamingMongoCollections && OperationStatus != EOperationStatus.Success)
             return Result.Failure("Cannot set the batch to finalized in the current batch operation and operation status.");
 
+        var setOperationSuccessResult = SetOperationSuccess();
+        if (setOperationSuccessResult.IsFailure)
+            return setOperationSuccessResult;
+
         Operation = operation;
-        OperationStatus = EOperationStatus.Success;
+        FinishedAt = DateTime.Now;
 
         return Result.Success();
     }

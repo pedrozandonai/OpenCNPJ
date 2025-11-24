@@ -3,5 +3,6 @@ public enum EOperationStatus
 {
     InOperation = 1,
     Success,
-    Failure
+    Failure,
+    Created,
 }

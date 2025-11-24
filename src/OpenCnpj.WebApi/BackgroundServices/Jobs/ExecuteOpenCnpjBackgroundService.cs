@@ -1,6 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 using OpenCnpj.Application.Application.Services.Interfaces;
+using OpenCnpj.Application.Batches.Batches.Models.Enums;
 using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Core.Configurations;
 using OpenCnpj.WebApi.BackgroundServices.Abstractions;
@@ -14,13 +15,20 @@ public class ExecuteOpenCnpjBackgroundService(IOptions<BackgroundJobSettings> op
     {
         using var scope = serviceProvider.CreateAsyncScope();
 
-        var batchService = scope.ServiceProvider.GetRequiredService<IBatchFileService>();
+        var batchService = scope.ServiceProvider.GetRequiredService<IBatchService>();
         var openCnpjScrapperService = scope.ServiceProvider.GetRequiredService<IOpenCnpjScrapperService>();
 
-        var batchIdentifier = DateTime.Now.ToString("yyyy-MM");
-        var batch = await batchService.GetOrCreateBatchByIdentifier(batchIdentifier, cancellationToken);
+        var batchPeriod = DateTime.Now.ToString("yyyy-MM");
+        var batch = await batchService.GetOrCreateBatchByPeriod(batchPeriod, cancellationToken);
         if (batch.IsFailure)
             return Result.Failure(batch.Error);
+
+        if (batch.Value.Operation == EBatchOperation.Finished)
+        {
+            batch = await batchService.CreateFutureBatch(cancellationToken);
+            if (batch.IsFailure)
+                return Result.Failure(batch.Error);
+        }
 
         return await openCnpjScrapperService.ExecuteAsync(batch.Value, cancellationToken);
     }

@@ -19,4 +19,11 @@ public static class SqliteHelper
         Directory.CreateDirectory(GetSqliteDbFolder());
     }
 
+    public static void DeleteSqLiteFolder()
+    {
+        var sqliteFolder = GetSqliteDbFolder();
+
+        if (Directory.Exists(sqliteFolder))
+            Directory.Delete(sqliteFolder, true);
+    }
 }

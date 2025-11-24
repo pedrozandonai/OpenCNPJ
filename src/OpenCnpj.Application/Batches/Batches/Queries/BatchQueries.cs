@@ -11,8 +11,10 @@ public class BatchQueries(IDatabaseFactory databaseFactory) : IBatchQueries
                                FROM batches
                               WHERE id = @id";
 
-        var command = new CommandDefinition(sql, new { id }, transaction: databaseFactory.Transaction, cancellationToken: cancellationToken);
+        using var conn = await databaseFactory.CreateConnectionAsync();
 
-        return await databaseFactory.Connection.QueryFirstOrDefaultAsync<int>(command) > 0;
+        var command = new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken);
+
+        return await conn.QueryFirstOrDefaultAsync<int>(command) > 0;
     }
 }

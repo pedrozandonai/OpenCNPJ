@@ -3,6 +3,7 @@ public enum EBatchOperation
 {
     Created = 1,
     PendingGovernmentBatch,
+    StartGovernmentPipeline,
     RenamingMongoCollections,
     Finished
 }

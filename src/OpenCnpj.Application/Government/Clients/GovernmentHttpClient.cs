@@ -2,7 +2,6 @@
 using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Application.Batches.BatchFiles.Domain;
-using OpenCnpj.Application.Batches.BatchFiles.Repositories;
 using OpenCnpj.Application.Government.Clients.Interfaces;
 using OpenCnpj.Core.Configurations;
 using Polly;
@@ -15,11 +14,11 @@ using ILogger = Serilog.ILogger;
 namespace OpenCnpj.Application.Government.Clients;
 
 public class GovernmentHttpClient(
-    IBatchFileService batchService,
+    IBatchService batchService,
+    IBatchFileService batchFileService,
     HttpClient httpClient,
     GovSetttings govSetttings,
     TweakSettings tweakSettings,
-    IBatchFileRepository batchFileRepository,
     ILogger logger) : IGovernmentHttpClient
 {
     private readonly ILogger _logger = logger.ForContext<IGovernmentHttpClient>();
@@ -31,7 +30,7 @@ public class GovernmentHttpClient(
     {
         try
         {
-            string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Identifier);
+            string currentGovDataUrl = string.Format("{0}/{1}", govSetttings.BaseUrl, batch.Period);
 
             _logger.Information("Fetching download URLs from: {0}", currentGovDataUrl);
 
@@ -43,7 +42,7 @@ public class GovernmentHttpClient(
                     return updateResult;
 
                 _logger.Information("The data from the government could not be found on this batch date: {0}, the next fetch will be at {1}",
-                    batch.Identifier, batch.RetryDate!.Value);
+                    batch.Period, batch.RetryDate!.Value);
 
                 downloadedFilesChannel.Writer.Complete();
 
@@ -60,10 +59,6 @@ public class GovernmentHttpClient(
 
             // Sinaliza que não há mais downloads
             downloadedFilesChannel.Writer.Complete();
-
-            var setOperationSuccessResult = await batchService.UpdateBatch(batch, batch.SetOperationSuccess, cancellationToken);
-            if (setOperationSuccessResult.IsFailure)
-                return setOperationSuccessResult;
 
             return Result.Success();
         }
@@ -126,6 +121,9 @@ public class GovernmentHttpClient(
 
         var tasks = urls.Select(async url =>
         {
+            BatchFile? partialDownloadBatchFile = null;
+            BatchFile? downloadedBatchFile = null;
+
             await semaphore.WaitAsync(cancellationToken);
             try
             {
@@ -139,15 +137,11 @@ public class GovernmentHttpClient(
                     var filePath = Path.Combine(rawDirectory, fileName);
                     var tempFilePath = filePath + ".partial";
 
-                    var batchFile = BatchFile.Create(fileName, tempFilePath);
-
-                    var batchFileID = await batchFileRepository.Insert(batchFile, cancellationToken);
-                    var setIDResult = batchFile.SetID(batchFileID);
-                    if (setIDResult.IsFailure)
-                    {
-                        _logger.Error("Erro.", fileName);
+                    var partialDownloadBatchFileCreationResult = await batchFileService.CreatePartialDownloadBatchFile(batch.ID, url, tempFilePath, cancellationToken);
+                    if (partialDownloadBatchFileCreationResult.IsFailure)
                         return;
-                    }
+
+                    partialDownloadBatchFile = partialDownloadBatchFileCreationResult.Value;
 
                     long existingLength = 0;
                     if (File.Exists(tempFilePath))
@@ -180,24 +174,46 @@ public class GovernmentHttpClient(
 
                     File.Move(tempFilePath, filePath);
 
-                    _logger.Information("Download finished: {0}", fileName);
-
-                    var setDownloadCompletedResult = batchFile.SetDownloadCompleted(filePath);
-                    if (setDownloadCompletedResult.IsFailure)
+                    var updateBatchFileResult = await batchFileService.UpdateBatchFile(partialDownloadBatchFile, partialDownloadBatchFile.SetDownloadCompleted, cancellationToken);
+                    if (updateBatchFileResult.IsFailure)
                     {
-                        _logger.Error("Erro.", fileName);
+                        _logger
+                            .ForContext("batchFile", partialDownloadBatchFile, true)
+                            .Error("An error ocurred while tryingg to update the batch file status. Error: {0}", updateBatchFileResult.Error);
+
                         return;
                     }
 
-                    await batchFileRepository.Update(batchFile, cancellationToken);
+                    var batchFileCreationResult = await batchFileService.CreateDownloadBatchFile(partialDownloadBatchFile, filePath, cancellationToken);
+                    if (batchFileCreationResult.IsFailure)
+                        return;
 
-                    // Notifica que o arquivo foi baixado e está pronto para extração
-                    await downloadedFilesChannel.Writer.WriteAsync(batchFile, cancellationToken);
+                    downloadedBatchFile = batchFileCreationResult.Value;
+
+                    _logger.Information("Download finished: {0}", fileName);
+
+                    await downloadedFilesChannel.Writer.WriteAsync(downloadedBatchFile, cancellationToken);
+
+                    _logger
+                    .ForContext("partialDownloadBatchFile", partialDownloadBatchFile, true)
+                    .ForContext("downloadedBatchFile", downloadedBatchFile, true)
+                    .Information("Successfully downloaded file {0}", fileName);
                 });
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error while downloading the url: {0}", url);
+
+                if (partialDownloadBatchFile == null)
+                    return;
+
+                var updateBatchFileResult = await batchFileService.UpdateBatchFile(partialDownloadBatchFile, () => partialDownloadBatchFile.SetOperationFailure(ex.Message), cancellationToken);
+                if (updateBatchFileResult.IsFailure)
+                {
+                    _logger
+                        .ForContext("batchFile", partialDownloadBatchFile, true)
+                        .Error("An error ocurred while tryingg to update the batch file status. Error: {0}", updateBatchFileResult.Error);
+                }
             }
             finally
             {

@@ -16,8 +16,6 @@ public static class DatabaseInjection
         if (string.IsNullOrEmpty(mongoConnectionString))
             throw new Exception("The 'MongoDB' connection string can not be null or empty.");
 
-        SqliteHelper.InitializeSqliteFolder();
-
         services.AddScoped<IDatabaseFactory>(sp =>
             new DatabaseFactory(SqliteHelper.GetSqliteConnectionString()));
 
@@ -46,6 +44,11 @@ public static class DatabaseInjection
         var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
         var mongoFactory = scope.ServiceProvider.GetRequiredService<IMongoDatabaseFactory>();
 
+        if (databaseSettings.FormatSqLite!.Value)
+        {
+            SqliteHelper.DeleteSqLiteFolder();
+        }
+
         if (databaseSettings.FormatMongoDB!.Value)
         {
             var client = mongoFactory.Client;
@@ -53,6 +56,8 @@ public static class DatabaseInjection
 
             Task.Run(async () => await client.DropDatabaseAsync(databaseName));
         }
+
+        SqliteHelper.InitializeSqliteFolder();
 
         runner.MigrateUp();
 
