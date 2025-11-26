@@ -160,25 +160,6 @@ public class OpenCnpjScrapperService(IBatchService batchService, IGovernmentHttp
             }, cancellationToken));
         }
 
-        switch(minOperation)
-        {
-            case EBatchFileOperation.Downloading:
-
-
-                break;
-
-            case EBatchFileOperation.Extracting:
-
-
-                break;
-
-            case EBatchFileOperation.Processing:
-                
-
-                break;
-
-        }
-
         var results = await Task.WhenAll(tasksToExecute);
 
         // Verifica se todas as etapas foram bem-sucedidas
