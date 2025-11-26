@@ -17,7 +17,7 @@ public static class CollectionsBaseExtension
         var filters = new List<FilterDefinition<T>>();
 
         if (code.HasValue)
-            filters.Add(filterBuilder.Eq(c => c.Code, code.Value.ToString()));
+            filters.Add(filterBuilder.Eq(c => c.Code, code.Value));
 
         if (!string.IsNullOrEmpty(description))
             filters.Add(filterBuilder.Eq(c => c.Description, description));
@@ -46,7 +46,7 @@ public static class CollectionsBaseExtension
 
         return new TDto
         {
-            ID = int.Parse(collectionRecord.Code),
+            ID = collectionRecord.Code,
             Description = collectionRecord.Description
         };
     }

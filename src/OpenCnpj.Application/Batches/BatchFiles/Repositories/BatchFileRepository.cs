@@ -82,4 +82,30 @@ public class BatchFileRepository(IDatabaseFactory databaseFactory) : IBatchFileR
 
         return await conn.QueryFirstOrDefaultAsync<BatchFile>(command);
     }
+
+    public async Task<IEnumerable<BatchFile>> GetUnfinishedBatchFileOperationsByBatchID(int batchID, CancellationToken cancellationToken)
+    {
+        const string sql = @"SELECT id AS ID,
+                                    parent_batch_file_id AS ParentBatchFileID,
+                                    batch_id AS BatchID,
+                                    url AS Url,
+                                    extension AS Extension,
+                                    file_name AS FileName,
+                                    file_path AS FilePath,
+                                    file_operation AS FileOperation,
+                                    operation_status AS OperationStatus,
+                                    type AS Type,
+                                    operation_failure_description AS OperationFailureDescription,
+                                    is_file_deleted AS IsFileDeleted,
+                                    created_at AS CreatedAt
+                               FROM batch_files
+                              WHERE batch_id = @batchID
+                                AND operation_status <> 2";
+
+        using var conn = await databaseFactory.CreateConnectionAsync();
+
+        var command = new CommandDefinition(sql, new { batchID }, cancellationToken: cancellationToken);
+
+        return await conn.QueryAsync<BatchFile>(command);
+    }
 }

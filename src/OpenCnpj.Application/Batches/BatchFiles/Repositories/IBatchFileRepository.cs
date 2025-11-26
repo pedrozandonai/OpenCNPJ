@@ -5,4 +5,5 @@ public interface IBatchFileRepository
 {
     Task<int> Insert(BatchFile batchFile, CancellationToken cancellationToken);
     Task Update(BatchFile batchFile, CancellationToken cancellationToken);
+    Task<IEnumerable<BatchFile>> GetUnfinishedBatchFileOperationsByBatchID(int batchID, CancellationToken cancellationToken);
 }

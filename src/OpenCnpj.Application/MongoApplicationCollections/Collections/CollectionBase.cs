@@ -7,6 +7,6 @@ namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 public abstract class CollectionBase
 {
     [MongoIndex(unique: true)]
-    public string Code { get; set; } = string.Empty;
+    public int Code { get; set; }
     public string Description { get; set; } = string.Empty;
 }

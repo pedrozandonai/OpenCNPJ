@@ -10,7 +10,7 @@ public class EstablishmentMapper : ClassMap<EstablishmentsCollection>
         Map(e => e.BasicCnpj).Index(0);
         Map(e => e.OrderCnpj).Index(1);
         Map(e => e.CheckDigitCnpj).Index(2);
-        Map(e => e.HeadOfficeOrBranch).Index(3);
+        Map(e => e.EstablishmentType).Index(3);
         Map(e => e.TradeName).Index(4);
         Map(e => e.RegistrationStatus).Index(5);
         Map(e => e.RegistrationStatusDate).Index(6).Convert(c =>

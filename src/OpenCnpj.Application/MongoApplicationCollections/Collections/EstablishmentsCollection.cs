@@ -13,15 +13,21 @@ public class EstablishmentsCollection : IMongoApplicationCollection
     public string BasicCnpj { get; set; } = string.Empty;
     public string OrderCnpj { get; set; } = string.Empty;
     public string CheckDigitCnpj { get; set; } = string.Empty;
-    public short HeadOfficeOrBranch { get; set; }
-    [MongoIndex(unique: true)]
+    [MongoIndex]
+    public short EstablishmentType { get; set; }
+    [MongoIndex]
     public string TradeName { get; set; } = string.Empty;
+    [MongoIndex]
     public string RegistrationStatus { get; set; } = string.Empty;
+    [MongoIndex]
     public DateTime? RegistrationStatusDate { get; set; }
     public string RegistrationStatusReason { get; set; } = string.Empty;
     public string ForeignCityName { get; set; } = string.Empty;
+    [MongoIndex]
     public string CountryCode { get; set; } = string.Empty;
+    [MongoIndex]
     public DateTime? StartActivityDate { get; set; }
+    [MongoIndex]
     public string MainCnae { get; set; } = string.Empty;
     public string SecondaryCnaes { get; set; } = string.Empty;
     public AddressesCollection Address { get; set; } = null!;

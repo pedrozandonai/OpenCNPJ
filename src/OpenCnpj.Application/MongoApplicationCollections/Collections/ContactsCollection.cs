@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using OpenCnpj.Application.MongoApplicationCollections.Domain;
+using OpenCnpj.Core.Attributes;
 
 namespace OpenCnpj.Application.MongoApplicationCollections.Collections;
 
@@ -13,5 +14,6 @@ public class ContactsCollection : IMongoApplicationCollection
     public string PhoneNumber2 { get; set; } = string.Empty;
     public string FaxAreaCode { get; set; } = string.Empty;
     public string FaxNumber { get; set; } = string.Empty;
+    [MongoIndex]
     public string Email { get; set; } = string.Empty;
 }

@@ -5,12 +5,13 @@ using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Models.Enums;
 using OpenCnpj.Application.Batches.Batches.Services;
 using OpenCnpj.Application.Batches.BatchFiles.Domain;
+using OpenCnpj.Application.Batches.BatchFiles.Repositories;
 using OpenCnpj.Application.Government.Clients.Interfaces;
 using Serilog;
 using System.Threading.Channels;
 
 namespace OpenCnpj.Application.Application.Services;
-public class OpenCnpjScrapperService(IBatchService batchService, IGovernmentHttpClient governmentHttpClient, IFileExtractionService fileExtractionService, ICsvProcessingService csvProcessingService, IMongoCollectionsService mongoCollectionsService, ILogger logger) : IOpenCnpjScrapperService
+public class OpenCnpjScrapperService(IBatchService batchService, IGovernmentHttpClient governmentHttpClient, IFileExtractionService fileExtractionService, ICsvProcessingService csvProcessingService, IMongoCollectionsService mongoCollectionsService, IBatchFileRepository batchFileRepository, ILogger logger) : IOpenCnpjScrapperService
 {
     private readonly ILogger _logger = logger.ForContext<OpenCnpjScrapperService>();
 
@@ -62,6 +63,17 @@ public class OpenCnpjScrapperService(IBatchService batchService, IGovernmentHttp
 
     //TODO: Aqui eu preciso pegar todos os batch files do batch passado por parâmetro e ver se eles existem primeiro, se existirem e tiverem com erro tem que retentar.
     private async Task<Result> ExecuteIncrementalPipeline(Batch batch, CancellationToken cancellationToken)
+    {
+        var batchFiles = await batchFileRepository.GetUnfinishedBatchFileOperationsByBatchID(batch.ID, cancellationToken);
+        if (!batchFiles.Any())
+            return await ExecuteAllIncrementalPipelines(batch, cancellationToken);
+
+        // TODO: Pegar a menor operação que deu errado na lista acima e chamar apenas as pipelines que precisa pra fazer aquela dar certo. Criar novos métodos pra serem exatamente aqueles necessários de serem executados, por exemplo, se não precisa baixar tudo de novo, passa a URL por parametro e tenta fazer o download de novo, mesma coisa pra extrair e processar no strategy.
+
+        return Result.Success();
+    }
+
+    private async Task<Result> ExecuteAllIncrementalPipelines(Batch batch, CancellationToken cancellationToken)
     {
         var setBatchToGovernmentPipelineResult = await batchService.UpdateBatch(batch, batch.StartStartGovernmentPipeline, cancellationToken);
         if (setBatchToGovernmentPipelineResult.IsFailure)

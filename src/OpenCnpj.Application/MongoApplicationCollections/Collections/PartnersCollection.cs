@@ -11,12 +11,14 @@ public class PartnersCollection : IMongoApplicationCollection
 
     [MongoIndex]
     public string BasicCnpj { get; set; } = string.Empty;
+    [MongoIndex]
     public short PartnerType { get; set; }
     [MongoIndex]
     public string PartnerName { get; set; } = string.Empty;
     [MongoIndex]
     public string PartnerDocument { get; set; } = string.Empty;
     public string PartnerQualification { get; set; } = string.Empty;
+    [MongoIndex]
     public DateTime? EntryDate { get; set; }
     public string CountryCode { get; set; } = string.Empty;
     public string RepresentativeDocument { get; set; } = string.Empty;

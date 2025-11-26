@@ -11,11 +11,14 @@ public class CompaniesCollection : IMongoApplicationCollection
 
     [MongoIndex(unique: true)]
     public string BasicCnpj { get; set; } = string.Empty;
-    [MongoIndex(unique: true)]
+    [MongoIndex]
     public string CorporateName { get; set; } = string.Empty;
+    [MongoIndex]
     public int LegalNatureCode { get; set; }
+    [MongoIndex]
     public int ResponsibleQualification { get; set; }
     public decimal ShareCapital { get; set; }
+    [MongoIndex]
     public short? CompanySize { get; set; }
     public string ResponsibleFederativeEntity { get; set; } = string.Empty;
 }

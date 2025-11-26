@@ -28,6 +28,10 @@ public class MongoCollectionsService(IBatchService batchService, IMongoDatabaseF
             await mongoDatabaseFactory.Database.RenameCollectionAsync(temporaryCollectionName, newCollectionName, cancellationToken: cancellationToken);
         }
 
+        var setOperationSuccessResult = await batchService.UpdateBatch(batch, batch.SetOperationSuccess, cancellationToken);
+        if (setOperationSuccessResult.IsFailure)
+            return setOperationSuccessResult;
+
         return Result.Success();
     }
 }

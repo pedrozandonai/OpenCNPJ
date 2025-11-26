@@ -60,7 +60,7 @@ public static class EstablishmentsCollectionExtension
         }
 
         if (companyType.HasValue)
-            filters.Add(filterBuilder.Eq(e => e.HeadOfficeOrBranch, companyType.Value));
+            filters.Add(filterBuilder.Eq(e => e.EstablishmentType, companyType.Value));
 
         // --- TradeName ---
         if (!string.IsNullOrWhiteSpace(tradeName))
@@ -175,7 +175,7 @@ public static class EstablishmentsCollectionExtension
 
         return new EstablishmentDto(
             new CnpjDto(establishmentsCollectionRecord.BasicCnpj, establishmentsCollectionRecord.OrderCnpj, establishmentsCollectionRecord.CheckDigitCnpj),
-            CompanyTypeDto.CreateByID(establishmentsCollectionRecord.HeadOfficeOrBranch),
+            CompanyTypeDto.CreateByID(establishmentsCollectionRecord.EstablishmentType),
             establishmentsCollectionRecord.TradeName,
             CompanySituationDto.CreateByID(short.Parse(establishmentsCollectionRecord.RegistrationStatus)),
             establishmentsCollectionRecord.RegistrationStatusDate ?? default,

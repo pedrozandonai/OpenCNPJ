@@ -183,10 +183,6 @@ public class Batch
         if (!IsInCurrentOperationError(operation) && Operation != EBatchOperation.RenamingMongoCollections && OperationStatus != EOperationStatus.Success)
             return Result.Failure("Cannot set the batch to finalized in the current batch operation and operation status.");
 
-        var setOperationSuccessResult = SetOperationSuccess();
-        if (setOperationSuccessResult.IsFailure)
-            return setOperationSuccessResult;
-
         Operation = operation;
         FinishedAt = DateTime.Now;
 
