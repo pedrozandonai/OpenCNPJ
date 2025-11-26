@@ -11,4 +11,5 @@ public interface IGovernmentHttpClient
         Batch batch,
         Channel<BatchFile> downloadedFilesChannel,
         CancellationToken cancellationToken);
+    Task<Result> DownloadBatchFiles(IEnumerable<BatchFile> batchFiles, Channel<BatchFile> downloadedFilesChannel, CancellationToken cancellationToken);
 }

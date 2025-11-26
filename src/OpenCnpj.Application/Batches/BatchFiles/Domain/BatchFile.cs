@@ -44,7 +44,7 @@ public class BatchFile
     }
 
     public static BatchFile CreatePartialDownloadBatchFile(int batchID, string url, string filePath)
-        => new(null, batchID, url, "partial", Path.GetFileNameWithoutExtension(filePath), filePath, EBatchFileOperation.Downloading, EOperationStatus.InOperation, EBatchFileType.PartialDownloadedFile, null, false, DateTime.Now);
+        => new(null, batchID, url, "partial", Path.GetFileName(filePath), filePath, EBatchFileOperation.Downloading, EOperationStatus.InOperation, EBatchFileType.PartialDownloadedFile, null, false, DateTime.Now);
 
     public static BatchFile CreateDownloadedBatchFile(int parentBatchFileID, int batchID,  string filePath)
         => new(parentBatchFileID, batchID, null, Path.GetExtension(filePath).Replace(".", ""), Path.GetFileNameWithoutExtension(filePath), filePath, EBatchFileOperation.Downloading, EOperationStatus.Created, EBatchFileType.DownloadedFile, null, false, DateTime.Now);
@@ -84,10 +84,12 @@ public class BatchFile
         if (Type != EBatchFileType.DownloadedFile)
             return Result.Failure("Cannot start extracting a non downloaded file.");
 
-        if (FileOperation != EBatchFileOperation.Downloading || OperationStatus != EOperationStatus.Created)
+        var operation = EBatchFileOperation.Extracting;
+
+        if (!IsInCurrentOperationError(operation) && FileOperation != EBatchFileOperation.Downloading && OperationStatus != EOperationStatus.Created)
             return Result.Failure("Cannot start extracting file while in download state.");
 
-        FileOperation = EBatchFileOperation.Extracting;
+        FileOperation = operation;
         OperationStatus = EOperationStatus.InOperation;
 
         return Result.Success();
@@ -117,10 +119,12 @@ public class BatchFile
         if (Type != EBatchFileType.ExtractedFile)
             return Result.Failure("Cannot start processing a non extracted file.");
 
-        if (FileOperation != EBatchFileOperation.Extracting || OperationStatus != EOperationStatus.Created)
+        var operation = EBatchFileOperation.Processing;
+
+        if (!IsInCurrentOperationError(operation) && FileOperation != EBatchFileOperation.Extracting && OperationStatus != EOperationStatus.Created)
             return Result.Failure("Cannot start processing the file while in extracting state.");
 
-        FileOperation = EBatchFileOperation.Processing;
+        FileOperation = operation;
         OperationStatus = EOperationStatus.InOperation;
 
         return Result.Success();
@@ -194,4 +198,7 @@ public class BatchFile
 
         return Result.Success();
     }
+
+    private bool IsInCurrentOperationError(EBatchFileOperation operation)
+        => FileOperation == operation && OperationStatus == EOperationStatus.Failure;
 }

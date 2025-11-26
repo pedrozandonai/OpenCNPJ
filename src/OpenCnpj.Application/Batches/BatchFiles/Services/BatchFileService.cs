@@ -2,6 +2,7 @@
 using OpenCnpj.Application.Batches.Batches.Domain;
 using OpenCnpj.Application.Batches.Batches.Repositories;
 using OpenCnpj.Application.Batches.BatchFiles.Domain;
+using OpenCnpj.Application.Batches.BatchFiles.Models.Enums;
 using OpenCnpj.Application.Batches.BatchFiles.Queries;
 using OpenCnpj.Application.Batches.BatchFiles.Repositories;
 using Serilog;
@@ -32,16 +33,26 @@ public class BatchFileService(IBatchRepository batchRepository, IBatchFileReposi
         return Result.Success(batchFile);
     }
 
-    public async Task<Result<BatchFile>> CreateDownloadBatchFile(BatchFile parentBatchFile, string filePath, CancellationToken cancellationToken)
+    public async Task<Result<BatchFile>> CreateDownloadBatchFileByPartialDownloadedBatchFile(BatchFile partialDownloadedBatchFile, CancellationToken cancellationToken)
     {
-        var batch = await batchRepository.GetByID(parentBatchFile.BatchID, cancellationToken);
+        var batch = await batchRepository.GetByID(partialDownloadedBatchFile.BatchID, cancellationToken);
         if (batch == null)
             return Result.Failure<BatchFile>("Unable to create batch file because the batch ID doesn't exists.");
 
-        if (await batchFileQueries.BatchFileExistsByFilePath(filePath, cancellationToken))
+        var finalDownloadedFilePath = Path.Combine(batch.GetRawDirectoryByBatch(), Path.GetFileNameWithoutExtension(partialDownloadedBatchFile.FileName));
+
+        if (await batchFileQueries.BatchFileExistsByFilePath(finalDownloadedFilePath, cancellationToken))
             return Result.Failure<BatchFile>("One batch file already exists with the same file path.");
 
-        var batchFile = BatchFile.CreateDownloadedBatchFile(parentBatchFile.ID, batch.ID, filePath);
+        if (partialDownloadedBatchFile.Type != EBatchFileType.PartialDownloadedFile)
+            return Result.Failure<BatchFile>("Unable to create a downloaded batch file from a non partial downloaded file.");
+
+        if (File.Exists(finalDownloadedFilePath))
+            File.Delete(finalDownloadedFilePath);
+
+        File.Move(partialDownloadedBatchFile.FilePath, finalDownloadedFilePath);
+
+        var batchFile = BatchFile.CreateDownloadedBatchFile(partialDownloadedBatchFile.ID, batch.ID, finalDownloadedFilePath);
 
         var batchFileID = await batchFileRepository.Insert(batchFile, cancellationToken);
 

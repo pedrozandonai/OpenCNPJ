@@ -13,11 +13,7 @@ public class FileExtractionService(IBatchService batchService, IBatchFileService
 {
     private readonly ILogger _logger = logger.ForContext<FileExtractionService>();
 
-    public async Task<Result> ExtractFilesIncremental(
-        Batch batch,
-        Channel<BatchFile> downloadedFilesChannel,
-        Channel<BatchFile> extractedFilesChannel,
-        CancellationToken cancellationToken)
+    public async Task<Result> ExtractFilesIncremental(Batch batch, Channel<BatchFile> downloadedFilesChannel, Channel<BatchFile> extractedFilesChannel, CancellationToken cancellationToken)
     {
         try
         {
